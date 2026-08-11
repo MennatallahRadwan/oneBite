@@ -1,0 +1,11 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: onebite
+      POSTGRES_USER: onebite
+      POSTGRES_PASSWORD: onebite
+    ports: ["5432:5432"]
+    volumes: ["onebite-postgres:/var/lib/postgresql/data"]
+volumes:
+  onebite-postgres:

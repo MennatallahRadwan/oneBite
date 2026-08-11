@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CUSTOMER
+  OWNER
+}
+enum OrderStatus {
+  PENDING_CONFIRMATION
+  CONFIRMED
+  REJECTED
+  CANCELLED
+}
+enum FulfilmentStatus {
+  NOT_STARTED
+  PREPARING
+  READY
+  OUT_FOR_DELIVERY
+  DELIVERED
+  DELIVERY_ISSUE
+}
+enum CodStatus {
+  COD_DUE
+  COLLECTED
+  PARTIALLY_REFUNDED
+  REFUNDED
+  WAIVED
+}
+
+model User {
+  id String @id @default(cuid())
+  email String? @unique
+  phone String? @unique
+  name String
+  role Role @default(CUSTOMER)
+  passwordHash String?
+  createdAt DateTime @default(now())
+  orders Order[]
+}
+model Category {
+  id String @id @default(cuid())
+  slug String @unique
+  nameEn String
+  nameAr String
+  products Product[]
+  archivedAt DateTime?
+}
+model Product {
+  id String @id @default(cuid())
+  slug String @unique
+  categoryId String
+  category Category @relation(fields: [categoryId], references: [id])
+  nameEn String
+  nameAr String
+  descriptionEn String
+  descriptionAr String
+  priceFils Int
+  capacityPoints Int @default(1)
+  leadDays Int @default(1)
+  published Boolean @default(false)
+  active Boolean @default(true)
+  variants ProductVariant[]
+  addons ProductAddon[]
+  archivedAt DateTime?
+}
+model ProductVariant {
+  id String @id @default(cuid())
+  productId String
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  nameEn String
+  nameAr String
+  priceFils Int
+  capacityPoints Int
+  leadDays Int @default(1)
+  active Boolean @default(true)
+}
+model ProductAddon {
+  id String @id @default(cuid())
+  productId String
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  nameEn String
+  nameAr String
+  priceFils Int
+  capacityPoints Int @default(0)
+  active Boolean @default(true)
+}
+model DeliveryArea {
+  id String @id @default(cuid())
+  nameEn String
+  nameAr String
+  feeFils Int
+  active Boolean @default(true)
+  slots DeliverySlot[]
+}
+model DeliverySlot {
+  id String @id @default(cuid())
+  areaId String
+  area DeliveryArea @relation(fields: [areaId], references: [id])
+  date DateTime
+  windowStart String
+  windowEnd String
+  capacity Int
+  reserved Int @default(0)
+  @@unique([areaId, date, windowStart])
+}
+model ProductionCapacity {
+  id String @id @default(cuid())
+  date DateTime @unique
+  totalPoints Int
+  usedPoints Int @default(0)
+}
+model Order {
+  id String @id @default(cuid())
+  publicNumber String @unique
+  trackingToken String @unique
+  userId String?
+  user User? @relation(fields: [userId], references: [id])
+  status OrderStatus @default(PENDING_CONFIRMATION)
+  fulfilmentStatus FulfilmentStatus @default(NOT_STARTED)
+  codStatus CodStatus @default(COD_DUE)
+  customerName String
+  customerPhone String
+  areaName String
+  deliveryWindow String
+  subtotalFils Int
+  discountFils Int @default(0)
+  deliveryFeeFils Int
+  totalFils Int
+  capacityPoints Int
+  isDelayed Boolean @default(false)
+  delayReason String?
+  rejectionReason String?
+  createdAt DateTime @default(now())
+  items OrderItem[]
+  reservation CapacityReservation?
+}
+model OrderItem {
+  id String @id @default(cuid())
+  orderId String
+  order Order @relation(fields: [orderId], references: [id])
+  productNameEn String
+  productNameAr String
+  variantName String?
+  selectedAddons Json
+  unitPriceFils Int
+  quantity Int
+  capacityPoints Int
+  cakeText String?
+  allergens Json
+  imageUrl String?
+}
+model CapacityReservation {
+  id String @id @default(cuid())
+  orderId String @unique
+  order Order @relation(fields: [orderId], references: [id])
+  date DateTime
+  points Int
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+}
