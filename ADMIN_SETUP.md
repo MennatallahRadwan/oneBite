@@ -20,6 +20,8 @@ OWNER_EMAIL="owner@example.com"
 OWNER_PASSWORD="use-a-long-unique-password"
 ```
 
+The encryption key must be the full first command output. A 64-character hexadecimal key is also accepted if you generated one elsewhere.
+
 Keep this file private. Changing `OWNER_TOTP_ENCRYPTION_KEY` after creating the account prevents the server from reading the stored TOTP secret; reset the owner account instead.
 
 ## 2. Add the TOTP secret to an authenticator app
