@@ -1,0 +1,10 @@
+import {afterAll,describe,expect,it} from 'vitest';
+import request from 'supertest';
+import {prisma} from './db.js';
+import {createApp} from './app.js';
+
+const app=createApp();
+let created:{orderNumber:string;date:string;window:string;points:number}|undefined;
+
+afterAll(async()=>{if(!created)return;const order=await prisma.order.findUnique({where:{publicNumber:created.orderNumber},include:{reservation:true}});if(order){await prisma.$transaction([prisma.capacityReservation.delete({where:{orderId:order.id}}),prisma.orderItem.deleteMany({where:{orderId:order.id}}),prisma.order.delete({where:{id:order.id}}),prisma.productionCapacity.update({where:{date:new Date(`${created.date}T00:00:00.000Z`)},data:{usedPoints:{decrement:created.points}}})]);const [windowStart,windowEnd]=created.window.split('–');const area=await prisma.deliveryArea.findFirstOrThrow({where:{nameEn:'Salmiya'}});const slot=await prisma.deliverySlot.findFirstOrThrow({where:{areaId:area.id,date:new Date(`${created.date}T00:00:00.000Z`),windowStart,windowEnd}});await prisma.deliverySlot.update({where:{id:slot.id},data:{reserved:{decrement:1}}})}});
+describe('order reservation',()=>{it('persists snapshots and capacity for a valid quote',async()=>{const quote=await request(app).post('/api/v1/checkout/quote').send({area:'Salmiya',items:[{slug:'chocolate-truffle-cake',quantity:1}]});expect(quote.status).toBe(200);const placed=await request(app).post('/api/v1/orders').send({quoteId:quote.body.quoteId,selectedSlot:quote.body.earliestSlot,customer:{name:'Test Customer',phone:'+96590000000'},address:{governorate:'Hawalli',area:'Salmiya',block:'1',street:'Test',building:'1'}});expect(placed.status).toBe(201);const saved=await prisma.order.findUniqueOrThrow({where:{publicNumber:placed.body.orderNumber},include:{items:true,reservation:true}});expect(saved.status).toBe('PENDING_CONFIRMATION');expect(saved.items[0].unitPriceFils).toBe(8500);expect(saved.reservation?.active).toBe(true);created={orderNumber:saved.publicNumber,date:quote.body.earliestSlot.date,window:quote.body.earliestSlot.window,points:saved.capacityPoints}})});
