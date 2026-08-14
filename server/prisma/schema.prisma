@@ -40,8 +40,21 @@ model User {
   name String
   role Role @default(CUSTOMER)
   passwordHash String?
+  totpSecretEncrypted String?
+  mfaEnabled Boolean @default(false)
   createdAt DateTime @default(now())
   orders Order[]
+  sessions Session[]
+}
+model Session {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([userId])
+  @@index([expiresAt])
 }
 model Category {
   id String @id @default(cuid())
