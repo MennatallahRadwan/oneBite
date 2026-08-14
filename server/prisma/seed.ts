@@ -21,7 +21,12 @@ async function main(){
   const truffle=await prisma.product.findUniqueOrThrow({where:{slug:'chocolate-truffle-cake'}});
   await prisma.productVariant.upsert({where:{id:'seed-truffle-six'},create:{id:'seed-truffle-six',productId:truffle.id,nameEn:'Serves 6–8',nameAr:'يكفي ٦–٨',priceFils:0,capacityPoints:8,leadDays:2},update:{priceFils:0,capacityPoints:8,leadDays:2,active:true}});
   await prisma.productVariant.upsert({where:{id:'seed-truffle-ten'},create:{id:'seed-truffle-ten',productId:truffle.id,nameEn:'Serves 10–12',nameAr:'يكفي ١٠–١٢',priceFils:2500,capacityPoints:12,leadDays:3},update:{priceFils:2500,capacityPoints:12,leadDays:3,active:true}});
-  await prisma.deliveryArea.upsert({where:{id:'seed-salmiya'},create:{id:'seed-salmiya',nameEn:'Salmiya',nameAr:'السالمية',feeFils:1500},update:{feeFils:1500,active:true}});
+  const salmiya=await prisma.deliveryArea.upsert({where:{id:'seed-salmiya'},create:{id:'seed-salmiya',nameEn:'Salmiya',nameAr:'السالمية',feeFils:1500},update:{feeFils:1500,active:true}});
+  for(let offset=1;offset<=30;offset++){
+    const date=new Date();date.setUTCHours(0,0,0,0);date.setUTCDate(date.getUTCDate()+offset);if(date.getUTCDay()===5)continue;
+    await prisma.productionCapacity.upsert({where:{date},create:{date,totalPoints:60},update:{totalPoints:60}});
+    for(const [windowStart,windowEnd] of [['10:00','13:00'],['16:00','19:00']])await prisma.deliverySlot.upsert({where:{areaId_date_windowStart:{areaId:salmiya.id,date,windowStart}},create:{areaId:salmiya.id,date,windowStart,windowEnd,capacity:20},update:{windowEnd,capacity:20}});
+  }
   console.log(`Seeded ${await prisma.product.count()} products, variants, and the Salmiya delivery area.`);
 }
 
