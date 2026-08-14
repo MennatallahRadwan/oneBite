@@ -8,12 +8,15 @@ import {z} from 'zod';
 import {prisma} from './db.js';
 import {calculateAvailability} from './availability-service.js';
 import {createReservedOrder,OrderConflictError} from './order-service.js';
+import {beginOwnerLogin,completeOwnerLogin,logoutOwner,ownerFromRequest} from './owner-auth.js';
 
 const cart=z.object({items:z.array(z.object({slug:z.string(),quantity:z.number().int().min(1)})).min(1),area:z.string().min(1)});
 const order=z.object({quoteId:z.string().uuid(),selectedSlot:z.object({date:z.string(),window:z.string()}),customer:z.object({name:z.string().min(2),phone:z.string().min(6)}),address:z.object({governorate:z.string().min(1),area:z.string().min(1),block:z.string().min(1),street:z.string().min(1),building:z.string().min(1),floor:z.string().max(100).optional(),instructions:z.string().max(500).optional()})});
 const quotes=new Map<string,{expiresAt:number;items:{slug:string;quantity:number}[];area:string}>();
 const publicProduct={published:true,active:true,archivedAt:null};
 const normalizePhone=(value:string)=>value.replace(/\D/g,'');
+const ownerLogin=z.object({email:z.string().email(),password:z.string().min(12).max(200)});
+const totp=z.object({code:z.string().regex(/^\d{6}$/)});
 
 export function createApp(){
   const app=express();
@@ -23,6 +26,11 @@ export function createApp(){
   app.use(express.json({limit:'100kb'}));
   app.use((_,res,next)=>{res.setHeader('X-Request-Id',randomUUID());next()});
   app.get('/api/v1/health',(_,res)=>res.json({ok:true}));
+  app.post('/api/v1/owner/auth/login',rateLimit({windowMs:900000,limit:5}),async(req,res,next)=>{try{const body=ownerLogin.safeParse(req.body);if(!body.success)return res.status(400).json({error:{code:'VALIDATION_ERROR',message:'Invalid login details'}});const accepted=await beginOwnerLogin(body.data.email.toLowerCase(),body.data.password,res);if(!accepted)return res.status(401).json({error:{code:'INVALID_CREDENTIALS',message:'Invalid owner credentials'}});res.status(202).json({requiresTotp:true})}catch(error){next(error)}});
+  app.post('/api/v1/owner/auth/verify-totp',rateLimit({windowMs:900000,limit:5}),async(req,res,next)=>{try{const body=totp.safeParse(req.body);if(!body.success)return res.status(400).json({error:{code:'VALIDATION_ERROR',message:'Invalid verification code'}});const owner=await completeOwnerLogin(body.data.code,req,res);if(!owner)return res.status(401).json({error:{code:'INVALID_TOTP',message:'Invalid or expired verification code'}});res.json({owner})}catch(error){next(error)}});
+  app.post('/api/v1/owner/auth/logout',async(req,res,next)=>{try{await logoutOwner(req,res);res.status(204).end()}catch(error){next(error)}});
+  app.get('/api/v1/owner/me',async(req,res,next)=>{try{const owner=await ownerFromRequest(req);if(!owner)return res.status(401).json({error:{code:'UNAUTHENTICATED',message:'Owner authentication required'}});res.json({id:owner.id,name:owner.name,email:owner.email})}catch(error){next(error)}});
+  app.get('/api/v1/owner/orders',async(req,res,next)=>{try{const owner=await ownerFromRequest(req);if(!owner)return res.status(401).json({error:{code:'UNAUTHENTICATED',message:'Owner authentication required'}});const items=await prisma.order.findMany({orderBy:{createdAt:'desc'},take:100,select:{publicNumber:true,status:true,fulfilmentStatus:true,codStatus:true,customerName:true,customerPhone:true,areaName:true,deliveryWindow:true,totalFils:true,createdAt:true}});res.json({items})}catch(error){next(error)}});
   app.get('/api/v1/catalog/categories',async(_req,res,next)=>{try{const categories=await prisma.category.findMany({where:{archivedAt:null,products:{some:publicProduct}},orderBy:{nameEn:'asc'},select:{slug:true,nameEn:true,nameAr:true}});res.json(categories)}catch(error){next(error)}});
   app.get('/api/v1/catalog/products',async(_req,res,next)=>{try{const items=await prisma.product.findMany({where:publicProduct,orderBy:{nameEn:'asc'},select:{slug:true,nameEn:true,nameAr:true,priceFils:true,capacityPoints:true,leadDays:true}});res.json({items})}catch(error){next(error)}});
   app.get('/api/v1/catalog/products/:slug',async(req,res,next)=>{try{const product=await prisma.product.findFirst({where:{...publicProduct,slug:req.params.slug},include:{variants:{where:{active:true}},addons:{where:{active:true}}}});if(!product)return res.status(404).json({error:{code:'NOT_FOUND',message:'Product not found'}});res.json(product)}catch(error){next(error)}});
