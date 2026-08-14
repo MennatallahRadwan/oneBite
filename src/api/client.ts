@@ -1,7 +1,7 @@
 export type CartLine={slug:string;quantity:number};
 export type Slot={date:string;window:string};
 export type Quote={quoteId:string;expiresAt:string;subtotalFils:number;discountFils:number;deliveryFeeFils:number;totalFils:number;capacityPoints:number;earliestSlot:Slot|null;availableSlots:Slot[]};
-export type CreateOrder={quoteId:string;selectedSlot:Slot;customer:{name:string;phone:string};address:{governorate:string;area:string;block:string;street:string;building:string}};
+export type CreateOrder={quoteId:string;selectedSlot:Slot;customer:{name:string;phone:string};address:{governorate:string;area:string;block:string;street:string;building:string;floor?:string;instructions?:string}};
 export type CreatedOrder={orderNumber:string;trackingToken:string;status:string;message:string};
 
 const base=import.meta.env.VITE_API_URL||'/api/v1';

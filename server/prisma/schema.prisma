@@ -126,7 +126,13 @@ model Order {
   codStatus CodStatus @default(COD_DUE)
   customerName String
   customerPhone String
+  governorate String
   areaName String
+  block String
+  street String
+  building String
+  floorOrApartment String?
+  deliveryInstructions String?
   deliveryWindow String
   subtotalFils Int
   discountFils Int @default(0)

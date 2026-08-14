@@ -31,7 +31,7 @@ async function next(){
   if(step.value===1){if(!selectedSlot.value){error.value='Please select an available delivery window.';return}step.value=2;return}
   if(!quote.value||!selectedSlot.value)return;
   loading.value=true;
-  try{const result=await api.createOrder({quoteId:quote.value.quoteId,selectedSlot:selectedSlot.value,customer:{name:`${form.value.first} ${form.value.last}`.trim(),phone:form.value.phone},address:{governorate:form.value.governorate,area:form.value.area,block:form.value.block,street:form.value.street,building:form.value.building}});created.value=result;store.clear()}
+  try{const result=await api.createOrder({quoteId:quote.value.quoteId,selectedSlot:selectedSlot.value,customer:{name:`${form.value.first} ${form.value.last}`.trim(),phone:form.value.phone},address:{governorate:form.value.governorate,area:form.value.area,block:form.value.block,street:form.value.street,building:form.value.building,floor:form.value.floor,instructions:form.value.instructions}});created.value=result;store.clear()}
   catch(reason){error.value=reason instanceof Error?reason.message:'Unable to create your order request.'}
   finally{loading.value=false}
 }
