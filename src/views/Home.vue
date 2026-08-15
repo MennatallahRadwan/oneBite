@@ -1,10 +1,16 @@
 <script setup lang="ts">
+import {computed, onMounted} from 'vue';
 import {ArrowRight, Clock, ShieldCheck, Truck} from 'lucide-vue-next';
-import {categories, products, img} from '../data';
+import {img} from '../data';
+import {useCatalogStore} from '../stores/catalog';
 import ProductCard from '../components/ProductCard.vue';
 
-const featured = products.filter(product => product.best).slice(0, 4);
-const seasonal = products.filter(product => product.seasonal).slice(0, 3);
+const catalog = useCatalogStore();
+onMounted(() => catalog.load());
+
+const categories = computed(() => catalog.categories);
+const featured = computed(() => catalog.products.filter(product => product.best).slice(0, 4));
+const seasonal = computed(() => catalog.products.filter(product => product.seasonal).slice(0, 3));
 </script>
 
 <template>
@@ -55,7 +61,9 @@ const seasonal = products.filter(product => product.seasonal).slice(0, 3);
         </div>
         <RouterLink to="/categories">All categories →</RouterLink>
       </div>
-      <div class="category-strip">
+      <p v-if="catalog.loading" class="form-note">Loading the menu…</p>
+      <p v-else-if="catalog.error" class="form-note" role="alert">{{ catalog.error }}</p>
+      <div v-else class="category-strip">
         <RouterLink
           v-for="category in categories.slice(0, 6)"
           :key="category.id"
@@ -80,13 +88,14 @@ const seasonal = products.filter(product => product.seasonal).slice(0, 3);
         </div>
         <RouterLink class="btn secondary" to="/best-sellers">View all</RouterLink>
       </div>
-      <div class="product-grid">
+      <p v-if="catalog.loading" class="form-note">Loading best sellers…</p>
+      <div v-else class="product-grid">
         <ProductCard v-for="product in featured" :key="product.id" :product="product"/>
       </div>
     </div>
   </section>
 
-  <section class="section">
+  <section v-if="seasonal.length" class="section">
     <div class="container">
       <div class="section-head">
         <div>

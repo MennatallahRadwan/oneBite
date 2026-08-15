@@ -58,6 +58,39 @@ const trackingLookup = z.object({
 
 const quotes = new Map<string, {expiresAt: number; items: {slug: string; quantity: number}[]; area: string}>();
 const publicProduct = {published: true, active: true, archivedAt: null};
+
+const optionFields = {id: true, nameEn: true, nameAr: true, priceFils: true, capacityPoints: true};
+
+// The catalog is small enough that returning options with the list saves the
+// storefront a second round trip per product page.
+const publicProductShape = {
+  slug: true,
+  nameEn: true,
+  nameAr: true,
+  descriptionEn: true,
+  descriptionAr: true,
+  priceFils: true,
+  capacityPoints: true,
+  leadDays: true,
+  imageUrl: true,
+  tags: true,
+  servingsEn: true,
+  servingsAr: true,
+  allergens: true,
+  bestSeller: true,
+  seasonal: true,
+  giftable: true,
+  cakeTextMaxLength: true,
+  cakeTextPriceFils: true,
+  cakeTextPoints: true,
+  category: {select: {slug: true}},
+  variants: {
+    select: {...optionFields, leadDays: true},
+    where: {active: true},
+    orderBy: {priceFils: 'asc'}
+  },
+  addons: {select: optionFields, where: {active: true}, orderBy: {priceFils: 'asc'}}
+} as const;
 const normalizePhone = (value: string) => value.replace(/\D/g, '');
 const authLimiter = () => rateLimit({windowMs: 900000, limit: 5});
 
@@ -172,10 +205,20 @@ export function createApp() {
     try {
       const categories = await prisma.category.findMany({
         where: {archivedAt: null, products: {some: publicProduct}},
-        orderBy: {nameEn: 'asc'},
-        select: {slug: true, nameEn: true, nameAr: true}
+        orderBy: [{sortOrder: 'asc'}, {nameEn: 'asc'}],
+        select: {
+          slug: true,
+          nameEn: true,
+          nameAr: true,
+          descriptionEn: true,
+          descriptionAr: true,
+          imageUrl: true,
+          _count: {select: {products: {where: publicProduct}}}
+        }
       });
-      res.json(categories);
+      res.json(
+        categories.map(({_count, ...category}) => ({...category, productCount: _count.products}))
+      );
     } catch (error) {
       next(error);
     }
@@ -186,14 +229,7 @@ export function createApp() {
       const items = await prisma.product.findMany({
         where: publicProduct,
         orderBy: {nameEn: 'asc'},
-        select: {
-          slug: true,
-          nameEn: true,
-          nameAr: true,
-          priceFils: true,
-          capacityPoints: true,
-          leadDays: true
-        }
+        select: publicProductShape
       });
       res.json({items});
     } catch (error) {
@@ -205,7 +241,7 @@ export function createApp() {
     try {
       const product = await prisma.product.findFirst({
         where: {...publicProduct, slug: req.params.slug},
-        include: {variants: {where: {active: true}}, addons: {where: {active: true}}}
+        select: publicProductShape
       });
       if (!product) return res.status(404).json({error: {code: 'NOT_FOUND', message: 'Product not found'}});
       res.json(product);

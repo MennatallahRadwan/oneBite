@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import {computed, ref, watch} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import {useRoute} from 'vue-router';
 import {SlidersHorizontal, Search as SearchIcon} from 'lucide-vue-next';
-import {products, categories} from '../data';
+import {useCatalogStore} from '../stores/catalog';
 import ProductCard from '../components/ProductCard.vue';
 import PageHero from '../components/PageHero.vue';
 
 const props = defineProps<{mode: string}>();
 const route = useRoute();
+const catalog = useCatalogStore();
+
+onMounted(() => catalog.load());
 
 const query = ref('');
 const category = ref((route.query.category as string) || 'all');
@@ -31,8 +34,10 @@ const subtitle = computed(
   () => subtitles[props.mode] ?? 'Choose from our available, made-to-order bakery menu.'
 );
 
+const categories = computed(() => catalog.categories);
+
 const filtered = computed(() => {
-  let list = [...products];
+  let list = [...catalog.products];
 
   if (props.mode === 'best') list = list.filter(product => product.best);
   if (props.mode === 'seasonal') list = list.filter(product => product.seasonal);
@@ -79,7 +84,9 @@ const filtered = computed(() => {
         </span>
       </div>
 
-      <div v-if="filtered.length" class="product-grid">
+      <p v-if="catalog.loading" class="form-note">Loading the menu…</p>
+      <p v-else-if="catalog.error" class="form-note" role="alert">{{ catalog.error }}</p>
+      <div v-else-if="filtered.length" class="product-grid">
         <ProductCard v-for="product in filtered" :key="product.id" :product="product"/>
       </div>
       <div v-else class="empty">

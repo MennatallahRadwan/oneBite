@@ -1,20 +1,36 @@
 <script setup lang="ts">
-import {computed, ref} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import {useRoute} from 'vue-router';
 import {Heart, Minus, Plus, ShoppingBag, Truck, ShieldCheck, Clock} from 'lucide-vue-next';
-import {products, money} from '../data';
+import {money} from '../data';
+import {useCatalogStore} from '../stores/catalog';
 import {useShopStore} from '../stores/shop';
 import ProductCard from '../components/ProductCard.vue';
 
 const route = useRoute();
 const store = useShopStore();
+const catalog = useCatalogStore();
+
+onMounted(() => catalog.load());
 
 const qty = ref(1);
 const selectedVariant = ref('');
 const selectedAddons = ref<string[]>([]);
 const cakeText = ref('');
 
-const product = computed(() => products.find(item => item.id === route.params.id));
+const product = computed(() => catalog.byId(String(route.params.id)));
+
+// Navigating between product pages reuses this component, so the previous
+// product's selections have to be dropped.
+watch(
+  () => route.params.id,
+  () => {
+    qty.value = 1;
+    selectedVariant.value = '';
+    selectedAddons.value = [];
+    cakeText.value = '';
+  }
+);
 
 const variant = computed(
   () =>
@@ -38,7 +54,7 @@ const unitPrice = computed(
 );
 
 const related = computed(() =>
-  products
+  catalog.products
     .filter(item => item.category === product.value?.category && item.id !== product.value?.id)
     .slice(0, 4)
 );
@@ -49,7 +65,19 @@ function add() {
 </script>
 
 <template>
-  <section v-if="product" class="section">
+  <section v-if="catalog.loading || catalog.error || !product" class="section">
+    <div class="container empty">
+      <p v-if="catalog.loading" class="form-note">Loading this product…</p>
+      <p v-else-if="catalog.error" class="form-note" role="alert">{{ catalog.error }}</p>
+      <template v-else>
+        <h2>Product not found</h2>
+        <p>This product may have been removed from the menu.</p>
+        <RouterLink class="btn primary" to="/shop">Browse the menu</RouterLink>
+      </template>
+    </div>
+  </section>
+
+  <section v-else class="section">
     <div class="container product-detail">
       <div class="detail-image">
         <img :src="product.image" :alt="product.name">

@@ -98,8 +98,55 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 const post = <T>(path: string, body: unknown) =>
   request<T>(path, {method: 'POST', body: JSON.stringify(body)});
 
+export type ApiCategory = {
+  slug: string;
+  nameEn: string;
+  nameAr: string;
+  descriptionEn: string | null;
+  descriptionAr: string | null;
+  imageUrl: string | null;
+  productCount: number;
+};
+
+export type ApiOption = {
+  id: string;
+  nameEn: string;
+  nameAr: string;
+  priceFils: number;
+  capacityPoints: number;
+};
+
+export type ApiProduct = {
+  slug: string;
+  nameEn: string;
+  nameAr: string;
+  descriptionEn: string;
+  descriptionAr: string;
+  priceFils: number;
+  capacityPoints: number;
+  leadDays: number;
+  imageUrl: string | null;
+  tags: string[];
+  servingsEn: string | null;
+  servingsAr: string | null;
+  allergens: string[];
+  bestSeller: boolean;
+  seasonal: boolean;
+  giftable: boolean;
+  cakeTextMaxLength: number | null;
+  cakeTextPriceFils: number | null;
+  cakeTextPoints: number | null;
+  category: {slug: string};
+  variants: (ApiOption & {leadDays: number})[];
+  addons: ApiOption[];
+};
+
 export const api = {
-  catalog: () => request<{items: unknown[]}>('/catalog/products'),
+  categories: () => request<ApiCategory[]>('/catalog/categories'),
+
+  products: () => request<{items: ApiProduct[]}>('/catalog/products'),
+
+  product: (slug: string) => request<ApiProduct>(`/catalog/products/${encodeURIComponent(slug)}`),
 
   availability: (items: CartLine[], area: string) =>
     post<{capacityPoints: number; earliestSlot: Slot | null; availableSlots: Slot[]}>(

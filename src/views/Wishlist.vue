@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import {computed} from 'vue';
+import {computed, onMounted} from 'vue';
 import {Heart} from 'lucide-vue-next';
-import {products} from '../data';
+import {useCatalogStore} from '../stores/catalog';
 import {useShopStore} from '../stores/shop';
 import ProductCard from '../components/ProductCard.vue';
 import PageHero from '../components/PageHero.vue';
 
 const store = useShopStore();
-const list = computed(() => products.filter(product => store.wishlist.includes(product.id)));
+const catalog = useCatalogStore();
+
+onMounted(() => catalog.load());
+
+const list = computed(() =>
+  catalog.products.filter(product => store.wishlist.includes(product.id))
+);
 </script>
 
 <template>
@@ -19,7 +25,10 @@ const list = computed(() => products.filter(product => store.wishlist.includes(p
 
   <section class="section">
     <div class="container">
-      <div v-if="!list.length" class="empty">
+      <p v-if="catalog.loading" class="form-note">Loading your saved items…</p>
+      <p v-else-if="catalog.error" class="form-note" role="alert">{{ catalog.error }}</p>
+
+      <div v-else-if="!list.length" class="empty">
         <Heart :size="48"/>
         <h2>No favorites yet</h2>
         <p>Tap the heart on any product to save it here.</p>
