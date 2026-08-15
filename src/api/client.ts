@@ -113,6 +113,9 @@ export const api = {
 
   tracking: (token: string) => request<TrackingOrder>(`/tracking/${encodeURIComponent(token)}`),
 
+  trackingLookup: (orderNumber: string, phone: string) =>
+    post<{trackingToken: string}>('/tracking/lookup', {orderNumber, phone}),
+
   owner: {
     me: () => request<Owner>('/owner/me'),
     login: (email: string, password: string) =>

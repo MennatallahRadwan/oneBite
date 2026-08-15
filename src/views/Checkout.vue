@@ -159,6 +159,11 @@ async function next() {
         <button class="btn primary" @click="router.push(`/order/${created!.trackingToken}`)">
           Track your order
         </button>
+        <p class="form-note">
+          Save this link. If you lose it you can find your order again from
+          <RouterLink to="/track">order tracking</RouterLink> using your order number and phone
+          number.
+        </p>
       </div>
 
       <template v-else>

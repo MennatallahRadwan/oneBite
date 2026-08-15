@@ -10,6 +10,7 @@ import Search from '../views/Search.vue';
 import StaticPage from '../views/StaticPage.vue';
 import Profile from '../views/Profile.vue';
 import OrderTracking from '../views/OrderTracking.vue';
+import TrackOrder from '../views/TrackOrder.vue';
 import Admin from '../views/Admin.vue';
 import NotFound from '../views/NotFound.vue';
 
@@ -30,6 +31,7 @@ export default createRouter({
     {path: '/search', component: Search},
     {path: '/profile', component: Profile},
     {path: '/admin', component: Admin},
+    {path: '/track', component: TrackOrder},
     {path: '/order/:id', component: OrderTracking},
     {path: '/about', component: StaticPage, props: {type: 'about'}},
     {path: '/faq', component: StaticPage, props: {type: 'faq'}},

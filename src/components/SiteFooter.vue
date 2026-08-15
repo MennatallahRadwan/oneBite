@@ -27,7 +27,7 @@ import {Instagram, Mail, MapPin, Phone} from 'lucide-vue-next';
       <div>
         <h4>Help</h4>
         <RouterLink to="/faq">FAQ</RouterLink>
-        <RouterLink to="/order/OB-24071">Track order</RouterLink>
+        <RouterLink to="/track">Track order</RouterLink>
         <RouterLink to="/contact">Contact us</RouterLink>
         <RouterLink to="/about">Our story</RouterLink>
       </div>
