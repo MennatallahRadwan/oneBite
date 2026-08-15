@@ -141,12 +141,16 @@ export type ApiProduct = {
   addons: ApiOption[];
 };
 
+export type DeliveryArea = {nameEn: string; nameAr: string; feeFils: number};
+
 export const api = {
   categories: () => request<ApiCategory[]>('/catalog/categories'),
 
   products: () => request<{items: ApiProduct[]}>('/catalog/products'),
 
   product: (slug: string) => request<ApiProduct>(`/catalog/products/${encodeURIComponent(slug)}`),
+
+  deliveryAreas: () => request<{items: DeliveryArea[]}>('/delivery/areas'),
 
   availability: (items: CartLine[], area: string) =>
     post<{capacityPoints: number; earliestSlot: Slot | null; availableSlots: Slot[]}>(

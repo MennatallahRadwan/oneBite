@@ -250,6 +250,19 @@ export function createApp() {
     }
   });
 
+  app.get('/api/v1/delivery/areas', async (_req, res, next) => {
+    try {
+      const items = await prisma.deliveryArea.findMany({
+        where: {active: true},
+        orderBy: [{feeFils: 'asc'}, {nameEn: 'asc'}],
+        select: {nameEn: true, nameAr: true, feeFils: true}
+      });
+      res.json({items});
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post('/api/v1/availability/earliest', async (req, res, next) => {
     try {
       const parsed = cart.safeParse(req.body);

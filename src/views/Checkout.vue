@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import {computed, ref} from 'vue';
+import {computed, onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {ArrowLeft, ArrowRight, Check, Clock, Gift, MapPin, Wallet} from 'lucide-vue-next';
 import {money} from '../data';
-import {api, type Quote, type Slot} from '../api/client';
+import {api, type DeliveryArea, type Quote, type Slot} from '../api/client';
 import {useShopStore} from '../stores/shop';
 
 const router = useRouter();
 const store = useShopStore();
 
+const areas = ref<DeliveryArea[]>([]);
 const step = ref(0);
 const loading = ref(false);
 const error = ref('');
@@ -39,8 +40,23 @@ const form = ref({
 const governorates = ['Capital', 'Hawalli', 'Farwaniya', 'Mubarak Al-Kabeer', 'Ahmadi', 'Jahra'];
 const stepLabels = ['Delivery', 'Schedule', 'Gift details'];
 
+onMounted(async () => {
+  try {
+    areas.value = (await api.deliveryAreas()).items;
+  } catch {
+    error.value = 'Unable to load delivery areas. Please refresh and try again.';
+  }
+});
+
+// Before a quote exists the fee comes from the selected area, so the customer
+// sees what delivery costs without having to complete the whole form first.
+const selectedArea = computed(() => areas.value.find(area => area.nameEn === form.value.area));
+
 const cartLines = computed(() => store.cart.map(({product, quantity}) => ({slug: product.id, quantity})));
-const deliveryFee = computed(() => (quote.value ? quote.value.deliveryFeeFils / 1000 : null));
+const deliveryFee = computed(() => {
+  const fils = quote.value?.deliveryFeeFils ?? selectedArea.value?.feeFils;
+  return fils === undefined ? null : fils / 1000;
+});
 const total = computed(() =>
   quote.value ? quote.value.totalFils / 1000 : store.cartTotal + (deliveryFee.value || 0)
 );
@@ -207,7 +223,9 @@ async function next() {
                   Delivery area
                   <select v-model="form.area">
                     <option disabled value="">Choose area</option>
-                    <option>Salmiya</option>
+                    <option v-for="area in areas" :key="area.nameEn" :value="area.nameEn">
+                      {{ area.nameEn }} · {{ money(area.feeFils / 1000) }}
+                    </option>
                   </select>
                 </label>
                 <label>Block<input v-model="form.block"></label>
