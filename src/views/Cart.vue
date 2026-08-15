@@ -25,22 +25,27 @@ const store = useShopStore();
 
       <div v-else class="cart-layout">
         <div class="cart-list">
-          <article v-for="item in store.cart" :key="item.product.id" class="cart-item">
-            <img :src="item.product.image">
+          <article v-for="item in store.cart" :key="item.lineId" class="cart-item">
+            <img :src="item.image">
             <div class="cart-info">
-              <RouterLink :to="`/product/${item.product.id}`">
-                <h3>{{ item.product.name }}</h3>
+              <RouterLink :to="`/product/${item.slug}`">
+                <h3>{{ item.name }}</h3>
               </RouterLink>
-              <p>{{ item.product.nameAr }}</p>
-              <strong>{{ money(item.product.price) }}</strong>
+              <p>{{ item.nameAr }}</p>
+              <ul v-if="item.variantName || item.addonNames.length || item.cakeText" class="line-options">
+                <li v-if="item.variantName">{{ item.variantName }}</li>
+                <li v-for="addon in item.addonNames" :key="addon">{{ addon }}</li>
+                <li v-if="item.cakeText">Message: “{{ item.cakeText }}”</li>
+              </ul>
+              <strong>{{ money(item.unitPrice) }}</strong>
             </div>
             <div class="qty">
-              <button @click="store.qty(item.product.id, item.quantity - 1)"><Minus :size="16"/></button>
+              <button @click="store.qty(item.lineId, item.quantity - 1)"><Minus :size="16"/></button>
               <b>{{ item.quantity }}</b>
-              <button @click="store.qty(item.product.id, item.quantity + 1)"><Plus :size="16"/></button>
+              <button @click="store.qty(item.lineId, item.quantity + 1)"><Plus :size="16"/></button>
             </div>
-            <strong class="line-total">{{ money(item.product.price * item.quantity) }}</strong>
-            <button class="trash" @click="store.remove(item.product.id)"><Trash2 :size="18"/></button>
+            <strong class="line-total">{{ money(item.unitPrice * item.quantity) }}</strong>
+            <button class="trash" @click="store.remove(item.lineId)"><Trash2 :size="18"/></button>
           </article>
         </div>
 

@@ -1,4 +1,10 @@
-export type CartLine = {slug: string; quantity: number};
+export type CartLine = {
+  slug: string;
+  quantity: number;
+  variantId?: string;
+  addonIds?: string[];
+  cakeText?: string;
+};
 export type Slot = {date: string; window: string};
 
 export type Quote = {

@@ -52,7 +52,15 @@ onMounted(async () => {
 // sees what delivery costs without having to complete the whole form first.
 const selectedArea = computed(() => areas.value.find(area => area.nameEn === form.value.area));
 
-const cartLines = computed(() => store.cart.map(({product, quantity}) => ({slug: product.id, quantity})));
+const cartLines = computed(() =>
+  store.cart.map(item => ({
+    slug: item.slug,
+    quantity: item.quantity,
+    variantId: item.variantId,
+    addonIds: item.addonIds,
+    cakeText: item.cakeText
+  }))
+);
 const deliveryFee = computed(() => {
   const fils = quote.value?.deliveryFeeFils ?? selectedArea.value?.feeFils;
   return fils === undefined ? null : fils / 1000;
@@ -305,13 +313,15 @@ async function next() {
 
           <aside class="summary">
             <h2>Your Order</h2>
-            <div v-for="item in store.cart" :key="item.product.id" class="mini-order">
-              <img :src="item.product.image" alt="">
+            <div v-for="item in store.cart" :key="item.lineId" class="mini-order">
+              <img :src="item.image" alt="">
               <span>
-                <b>{{ item.product.name }}</b>
+                <b>{{ item.name }}</b>
+                <small>{{ [item.variantName, ...item.addonNames].filter(Boolean).join(' · ') }}</small>
+                <small v-if="item.cakeText">Message: “{{ item.cakeText }}”</small>
                 <small>Qty {{ item.quantity }}</small>
               </span>
-              <strong>{{ money(item.product.price * item.quantity) }}</strong>
+              <strong>{{ money(item.unitPrice * item.quantity) }}</strong>
             </div>
             <div>
               <span>Subtotal</span>

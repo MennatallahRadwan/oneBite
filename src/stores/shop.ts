@@ -1,9 +1,32 @@
 import {defineStore} from 'pinia';
 import type {Product} from '../data';
 
-type CartItem = {product: Product; quantity: number};
+export type CartSelection = {
+  variantId?: string;
+  addonIds?: string[];
+  cakeText?: string;
+};
 
-const cartKey = 'onebite-cart';
+export type CartItem = {
+  /** Identity of a configured line: the same cake in two sizes is two lines. */
+  lineId: string;
+  slug: string;
+  name: string;
+  nameAr: string;
+  image: string;
+  quantity: number;
+  variantId?: string;
+  variantName?: string;
+  addonIds: string[];
+  addonNames: string[];
+  cakeText?: string;
+  /** Price for one unit in KWD, with variant, add-ons and cake text applied. */
+  unitPrice: number;
+};
+
+// v1 stored whole Product objects keyed by product id, which cannot represent
+// a configured line. Old carts are dropped rather than migrated.
+const cartKey = 'onebite-cart-v2';
 const wishlistKey = 'onebite-wishlist';
 
 function read<T>(key: string, fallback: T): T {
@@ -11,8 +34,52 @@ function read<T>(key: string, fallback: T): T {
     const raw = localStorage.getItem(key);
     return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
+    // A corrupt entry used to throw while the store was being defined, which
+    // took down the whole app before it rendered.
     return fallback;
   }
+}
+
+export function lineIdFor(slug: string, selection: CartSelection) {
+  return [
+    slug,
+    selection.variantId ?? '',
+    [...(selection.addonIds ?? [])].sort().join(','),
+    selection.cakeText?.trim() ?? ''
+  ].join('|');
+}
+
+export function buildCartItem(
+  product: Product,
+  quantity: number,
+  selection: CartSelection = {}
+): CartItem {
+  const variant = product.variants?.find(option => option.id === selection.variantId);
+  const addons = (product.addons ?? []).filter(addon =>
+    (selection.addonIds ?? []).includes(addon.id)
+  );
+  const cakeText = selection.cakeText?.trim() || undefined;
+
+  const unitPrice =
+    product.price +
+    (variant?.price ?? 0) +
+    addons.reduce((total, addon) => total + addon.price, 0) +
+    (cakeText ? product.cakeText?.price ?? 0 : 0);
+
+  return {
+    lineId: lineIdFor(product.id, selection),
+    slug: product.id,
+    name: product.name,
+    nameAr: product.nameAr,
+    image: product.image,
+    quantity,
+    variantId: variant?.id,
+    variantName: variant?.name,
+    addonIds: addons.map(addon => addon.id),
+    addonNames: addons.map(addon => addon.name),
+    cakeText,
+    unitPrice
+  };
 }
 
 export const useShopStore = defineStore('shop', {
@@ -23,7 +90,7 @@ export const useShopStore = defineStore('shop', {
 
   getters: {
     cartCount: state => state.cart.reduce((total, item) => total + item.quantity, 0),
-    cartTotal: state => state.cart.reduce((total, item) => total + item.product.price * item.quantity, 0)
+    cartTotal: state => state.cart.reduce((total, item) => total + item.unitPrice * item.quantity, 0)
   },
 
   actions: {
@@ -32,20 +99,21 @@ export const useShopStore = defineStore('shop', {
       localStorage.setItem(wishlistKey, JSON.stringify(this.wishlist));
     },
 
-    add(product: Product, quantity = 1) {
-      const found = this.cart.find(item => item.product.id === product.id);
+    add(product: Product, quantity = 1, selection: CartSelection = {}) {
+      const item = buildCartItem(product, quantity, selection);
+      const found = this.cart.find(existing => existing.lineId === item.lineId);
       if (found) found.quantity += quantity;
-      else this.cart.push({product, quantity});
+      else this.cart.push(item);
       this.persist();
     },
 
-    remove(id: string) {
-      this.cart = this.cart.filter(item => item.product.id !== id);
+    remove(lineId: string) {
+      this.cart = this.cart.filter(item => item.lineId !== lineId);
       this.persist();
     },
 
-    qty(id: string, quantity: number) {
-      const item = this.cart.find(item => item.product.id === id);
+    qty(lineId: string, quantity: number) {
+      const item = this.cart.find(item => item.lineId === lineId);
       if (item) item.quantity = Math.max(1, quantity);
       this.persist();
     },

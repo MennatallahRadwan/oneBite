@@ -59,8 +59,21 @@ const related = computed(() =>
     .slice(0, 4)
 );
 
+const added = ref(false);
+
 function add() {
-  if (product.value) store.add(product.value, qty.value);
+  if (!product.value) return;
+
+  store.add(product.value, qty.value, {
+    // The size buttons show the first variant as selected before the customer
+    // touches them, so an untouched form must send that same variant.
+    variantId: selectedVariant.value || product.value.variants?.[0]?.id,
+    addonIds: selectedAddons.value,
+    cakeText: cakeText.value
+  });
+
+  added.value = true;
+  window.setTimeout(() => (added.value = false), 2500);
 }
 </script>
 
@@ -150,6 +163,10 @@ function add() {
             <Heart :fill="store.wishlist.includes(product.id) ? 'currentColor' : 'none'"/>
           </button>
         </div>
+
+        <p v-if="added" class="form-note" role="status">
+          Added to your cart. <RouterLink to="/cart">View cart</RouterLink>
+        </p>
 
         <div class="detail-trust">
           <span><Truck/> Delivery fee and earliest window are calculated after area selection</span>
