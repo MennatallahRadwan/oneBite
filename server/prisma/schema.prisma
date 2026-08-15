@@ -61,6 +61,10 @@ model Category {
   slug String @unique
   nameEn String
   nameAr String
+  descriptionEn String?
+  descriptionAr String?
+  imageUrl String?
+  sortOrder Int @default(0)
   products Product[]
   archivedAt DateTime?
 }
@@ -78,6 +82,17 @@ model Product {
   leadDays Int @default(1)
   published Boolean @default(false)
   active Boolean @default(true)
+  imageUrl String?
+  tags String[] @default([])
+  servingsEn String?
+  servingsAr String?
+  allergens String[] @default([])
+  bestSeller Boolean @default(false)
+  seasonal Boolean @default(false)
+  giftable Boolean @default(false)
+  cakeTextMaxLength Int?
+  cakeTextPriceFils Int?
+  cakeTextPoints Int?
   variants ProductVariant[]
   addons ProductAddon[]
   archivedAt DateTime?
@@ -105,7 +120,7 @@ model ProductAddon {
 }
 model DeliveryArea {
   id String @id @default(cuid())
-  nameEn String
+  nameEn String @unique
   nameAr String
   feeFils Int
   active Boolean @default(true)
