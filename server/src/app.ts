@@ -7,15 +7,21 @@ import {randomUUID} from 'node:crypto';
 import {z} from 'zod';
 import {prisma} from './db.js';
 import {calculateAvailability} from './availability-service.js';
+import {CartError, cartSubtotalFils, type CartLine} from './cart-service.js';
 import {createReservedOrder, OrderConflictError} from './order-service.js';
 import {beginOwnerLogin, completeOwnerLogin, logoutOwner, ownerFromRequest} from './owner-auth.js';
 import {OrderLifecycleError, updateOrderLifecycle} from './order-lifecycle-service.js';
 
+const cartItem = z.object({
+  slug: z.string(),
+  quantity: z.number().int().min(1),
+  variantId: z.string().min(1).optional(),
+  addonIds: z.array(z.string().min(1)).max(10).optional(),
+  cakeText: z.string().max(200).optional()
+});
+
 const cart = z.object({
-  items: z.array(z.object({
-    slug: z.string(),
-    quantity: z.number().int().min(1)
-  })).min(1),
+  items: z.array(cartItem).min(1).max(50),
   area: z.string().min(1)
 });
 
@@ -56,7 +62,7 @@ const trackingLookup = z.object({
   phone: z.string().min(6)
 });
 
-const quotes = new Map<string, {expiresAt: number; items: {slug: string; quantity: number}[]; area: string}>();
+const quotes = new Map<string, {expiresAt: number; items: CartLine[]; area: string}>();
 const publicProduct = {published: true, active: true, archivedAt: null};
 
 const optionFields = {id: true, nameEn: true, nameAr: true, priceFils: true, capacityPoints: true};
@@ -267,8 +273,10 @@ export function createApp() {
     try {
       const parsed = cart.safeParse(req.body);
       if (!parsed.success) return validationError(res, 'Invalid cart');
-      res.json(await calculateAvailability(parsed.data.items, parsed.data.area));
+      const {lines, ...availability} = await calculateAvailability(parsed.data.items, parsed.data.area);
+      res.json(availability);
     } catch (error) {
+      if (error instanceof CartError) return validationError(res, error.message);
       next(error);
     }
   });
@@ -281,10 +289,7 @@ export function createApp() {
       const result = await calculateAvailability(parsed.data.items, parsed.data.area);
       if (result.unavailable) return res.status(409).json({error: {code: 'UNAVAILABLE', message: result.reason}});
 
-      const subtotal = parsed.data.items.reduce(
-        (total, line) => total + (result.items.find(item => item.slug === line.slug)?.priceFils ?? 0) * line.quantity,
-        0
-      );
+      const subtotal = cartSubtotalFils(result.lines);
       const area = await prisma.deliveryArea.findFirstOrThrow({where: {nameEn: parsed.data.area, active: true}});
       const quoteId = randomUUID();
       const expiresAt = Date.now() + 900000;
@@ -293,7 +298,17 @@ export function createApp() {
       res.json({
         quoteId,
         expiresAt: new Date(expiresAt).toISOString(),
-        items: result.items,
+        items: result.lines.map(line => ({
+          slug: line.slug,
+          quantity: line.quantity,
+          nameEn: line.product.nameEn,
+          nameAr: line.product.nameAr,
+          variantName: line.variant?.nameEn ?? null,
+          addonNames: line.addons.map(addon => addon.nameEn),
+          cakeText: line.cakeText,
+          unitPriceFils: line.unitPriceFils,
+          capacityPoints: line.unitCapacityPoints
+        })),
         subtotalFils: subtotal,
         discountFils: 0,
         deliveryFeeFils: area.feeFils,
@@ -303,6 +318,7 @@ export function createApp() {
         availableSlots: result.availableSlots
       });
     } catch (error) {
+      if (error instanceof CartError) return validationError(res, error.message);
       next(error);
     }
   });
@@ -336,6 +352,7 @@ export function createApp() {
       if (error instanceof OrderConflictError) {
         return res.status(409).json({error: {code: 'UNAVAILABLE', message: error.message}});
       }
+      if (error instanceof CartError) return validationError(res, error.message);
       next(error);
     }
   });

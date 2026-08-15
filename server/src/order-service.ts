@@ -1,6 +1,7 @@
 import {randomBytes} from 'node:crypto';
 import {prisma} from './db.js';
-import {calculateAvailability, type CartLine} from './availability-service.js';
+import {calculateAvailability} from './availability-service.js';
+import {cartSubtotalFils, type CartLine} from './cart-service.js';
 
 type OrderRequest = {
   items: CartLine[];
@@ -24,6 +25,8 @@ const slotUnavailable = 'The selected delivery slot is no longer available.';
 export class OrderConflictError extends Error {}
 
 export async function createReservedOrder(input: OrderRequest) {
+  // Prices, capacity and options are all resolved server-side from the stored
+  // cart; nothing about the money or the reservation comes from the request.
   const availability = await calculateAvailability(input.items, input.area);
   if (availability.unavailable || !availability.earliestSlot) {
     throw new OrderConflictError(availability.reason ?? 'No delivery capacity.');
@@ -34,6 +37,8 @@ export async function createReservedOrder(input: OrderRequest) {
   );
   if (!slotIsOffered) throw new OrderConflictError(slotUnavailable);
 
+  const lines = availability.lines;
+  const subtotal = cartSubtotalFils(lines);
   const [windowStart, windowEnd] = input.selectedSlot.window.split('–');
   const date = day(input.selectedSlot.date);
 
@@ -55,20 +60,6 @@ export async function createReservedOrder(input: OrderRequest) {
     });
     if (productionUpdated.count !== 1 || slotUpdated.count !== 1) throw new OrderConflictError(slotUnavailable);
 
-    const products = await tx.product.findMany({
-      where: {slug: {in: input.items.map(item => item.slug)}, published: true, active: true, archivedAt: null},
-      select: {slug: true, nameEn: true, nameAr: true, priceFils: true, capacityPoints: true}
-    });
-    const productBySlug = new Map(products.map(product => [product.slug, product]));
-    if (productBySlug.size !== new Set(input.items.map(item => item.slug)).size) {
-      throw new OrderConflictError('Temporarily unavailable.');
-    }
-
-    const subtotal = input.items.reduce(
-      (total, item) => total + productBySlug.get(item.slug)!.priceFils * item.quantity,
-      0
-    );
-
     return tx.order.create({
       data: {
         publicNumber: `OB-${randomBytes(4).toString('hex').toUpperCase()}`,
@@ -88,18 +79,24 @@ export async function createReservedOrder(input: OrderRequest) {
         totalFils: subtotal + area.feeFils,
         capacityPoints: availability.capacityPoints,
         items: {
-          create: input.items.map(item => {
-            const product = productBySlug.get(item.slug)!;
-            return {
-              productNameEn: product.nameEn,
-              productNameAr: product.nameAr,
-              selectedAddons: [],
-              unitPriceFils: product.priceFils,
-              quantity: item.quantity,
-              capacityPoints: product.capacityPoints * item.quantity,
-              allergens: []
-            };
-          })
+          // Snapshots, not references: what the bakery reads must not change if
+          // the catalog is edited after the order is placed.
+          create: lines.map(line => ({
+            productNameEn: line.product.nameEn,
+            productNameAr: line.product.nameAr,
+            variantName: line.variant?.nameEn ?? null,
+            selectedAddons: line.addons.map(addon => ({
+              nameEn: addon.nameEn,
+              nameAr: addon.nameAr,
+              priceFils: addon.priceFils
+            })),
+            unitPriceFils: line.unitPriceFils,
+            quantity: line.quantity,
+            capacityPoints: line.unitCapacityPoints * line.quantity,
+            cakeText: line.cakeText,
+            allergens: line.product.allergens,
+            imageUrl: line.product.imageUrl
+          }))
         },
         reservation: {create: {date, points: availability.capacityPoints}}
       },

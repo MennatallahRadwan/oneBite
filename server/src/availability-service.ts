@@ -1,6 +1,14 @@
 import {prisma} from './db.js';
+import {
+  cartCapacityPoints,
+  cartLeadDays,
+  CartError,
+  resolveCartLines,
+  type CartLine,
+  type ResolvedLine
+} from './cart-service.js';
 
-export type CartLine = {slug: string; quantity: number};
+export type {CartLine} from './cart-service.js';
 
 type Availability = {
   unavailable: boolean;
@@ -8,7 +16,7 @@ type Availability = {
   capacityPoints: number;
   earliestSlot: {date: string; window: string; area: string} | null;
   availableSlots: {date: string; window: string}[];
-  items: {slug: string; priceFils: number; capacityPoints: number}[];
+  lines: ResolvedLine[];
 };
 
 const horizonDays = 30;
@@ -17,22 +25,34 @@ const dayKey = (date: Date) => date.toISOString().slice(0, 10);
 const startOfDay = (date: Date) => new Date(`${dayKey(date)}T00:00:00.000Z`);
 
 function unavailableResult(reason: string, capacityPoints = 0): Availability {
-  return {unavailable: true, reason, capacityPoints, earliestSlot: null, availableSlots: [], items: []};
+  return {
+    unavailable: true,
+    reason,
+    capacityPoints,
+    earliestSlot: null,
+    availableSlots: [],
+    lines: []
+  };
 }
 
-export async function calculateAvailability(lines: CartLine[], areaName: string): Promise<Availability> {
-  const products = await prisma.product.findMany({
-    where: {slug: {in: lines.map(line => line.slug)}, published: true, active: true, archivedAt: null},
-    select: {slug: true, priceFils: true, capacityPoints: true, leadDays: true}
-  });
-  if (products.length !== new Set(lines.map(line => line.slug)).size) {
-    return unavailableResult('Temporarily unavailable.');
+export async function calculateAvailability(
+  cart: CartLine[],
+  areaName: string
+): Promise<Availability> {
+  let lines: ResolvedLine[];
+  try {
+    lines = await resolveCartLines(cart);
+  } catch (error) {
+    // An unknown product reads as sold out to the customer; a bad option id
+    // is a client error and is re-thrown for the route to report as one.
+    if (error instanceof CartError && error.message === 'Temporarily unavailable.') {
+      return unavailableResult(error.message);
+    }
+    throw error;
   }
 
-  const bySlug = new Map(products.map(product => [product.slug, product]));
-  const items = lines.map(line => ({slug: line.slug, quantity: line.quantity, product: bySlug.get(line.slug)!}));
-  const capacityPoints = items.reduce((total, item) => total + item.quantity * item.product.capacityPoints, 0);
-  const leadDays = Math.max(...items.map(item => item.product.leadDays));
+  const capacityPoints = cartCapacityPoints(lines);
+  const leadDays = cartLeadDays(lines);
 
   const area = await prisma.deliveryArea.findFirst({where: {nameEn: areaName, active: true}});
   if (!area) return unavailableResult('Temporarily unavailable.', capacityPoints);
@@ -63,10 +83,6 @@ export async function calculateAvailability(lines: CartLine[], areaName: string)
     capacityPoints,
     earliestSlot: availableSlots[0] ? {...availableSlots[0], area: areaName} : null,
     availableSlots,
-    items: items.map(item => ({
-      slug: item.slug,
-      priceFils: item.product.priceFils,
-      capacityPoints: item.product.capacityPoints
-    }))
+    lines
   };
 }
