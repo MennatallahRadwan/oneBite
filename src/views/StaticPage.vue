@@ -8,12 +8,36 @@ defineProps<{type: string}>();
 const open = ref(0);
 
 const faqs = [
-  'How far in advance should I order?',
-  'Do you offer same-day delivery?',
-  'Can I customize a cake?',
-  'What are your delivery fees?',
-  'How should I store my order?',
-  'Do you cater for allergies?'
+  {
+    question: 'How far in advance should I order?',
+    answer:
+      'Each product has its own lead time, and the earliest date we can offer is calculated from everything in your cart together. The available dates shown at checkout already account for it.'
+  },
+  {
+    question: 'Do you offer same-day delivery?',
+    answer:
+      'No. Every order is made to order and needs at least its lead time before the earliest available delivery date, so we do not promise same-day delivery.'
+  },
+  {
+    question: 'Can I customize a cake?',
+    answer:
+      'You can choose from the sizes and packaging options listed on each product, and add a short message on cakes that offer it. We do not take free-form custom designs through the website.'
+  },
+  {
+    question: 'What are your delivery fees?',
+    answer:
+      'The fee depends on your delivery area and is shown at checkout once you select it. There is no free-delivery threshold.'
+  },
+  {
+    question: 'How should I store my order?',
+    answer:
+      'Cakes and cheesecakes should be refrigerated and are best enjoyed within two days. Pastries and cookies keep at room temperature in a sealed container.'
+  },
+  {
+    question: 'Do you cater for allergies?',
+    answer:
+      'Every product lists the allergens it contains on its page. Our kitchen handles gluten, dairy, eggs, nuts and sesame, so we cannot guarantee any product is free from traces of them.'
+  }
 ];
 
 const topics = ['General question', 'Custom order', 'Existing order', 'Feedback'];
@@ -72,15 +96,12 @@ const values = [
 
     <section class="section">
       <div class="container faq-list">
-        <article v-for="(question, index) in faqs" :key="question">
+        <article v-for="(faq, index) in faqs" :key="faq.question">
           <button @click="open = open === index ? -1 : index">
-            <b>{{ question }}</b>
+            <b>{{ faq.question }}</b>
             <span>{{ open === index ? '−' : '+' }}</span>
           </button>
-          <p v-if="open === index">
-            Most orders can be placed 24 hours ahead. Same-day delivery is available for selected
-            products when ordered before 2 PM, subject to capacity and delivery area.
-          </p>
+          <p v-if="open === index">{{ faq.answer }}</p>
         </article>
       </div>
     </section>

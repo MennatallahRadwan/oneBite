@@ -47,15 +47,12 @@ const store = useShopStore();
         <aside class="summary">
           <h2>Order Summary</h2>
           <div><span>Subtotal</span><b>{{ money(store.cartTotal) }}</b></div>
-          <div>
-            <span>Delivery</span>
-            <b>{{ store.cartTotal >= 20 ? 'Free' : 'Calculated at checkout' }}</b>
-          </div>
+          <div><span>Delivery</span><b>Calculated at checkout</b></div>
           <div class="total"><span>Total</span><b>{{ money(store.cartTotal) }}</b></div>
           <RouterLink class="btn primary full" to="/checkout">
             Proceed to Checkout <ArrowRight :size="17"/>
           </RouterLink>
-          <p>Secure checkout · Freshness guaranteed</p>
+          <p>Cash on delivery · Every order is confirmed by the bakery</p>
         </aside>
       </div>
     </div>
