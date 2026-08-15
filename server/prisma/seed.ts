@@ -1,33 +1,139 @@
 import 'dotenv/config';
 import {prisma} from '../src/db.js';
 
-const categories=[
-  {slug:'cakes',nameEn:'Cakes',nameAr:'الكيكات'},
-  {slug:'pastries',nameEn:'Pastries',nameAr:'المعجنات'},
-  {slug:'cheesecakes',nameEn:'Cheesecakes',nameAr:'تشيز كيك'},
-  {slug:'gift-boxes',nameEn:'Gift Boxes',nameAr:'صناديق الهدايا'}
+const categories = [
+  {slug: 'cakes', nameEn: 'Cakes', nameAr: 'الكيكات'},
+  {slug: 'pastries', nameEn: 'Pastries', nameAr: 'المعجنات'},
+  {slug: 'cheesecakes', nameEn: 'Cheesecakes', nameAr: 'تشيز كيك'},
+  {slug: 'gift-boxes', nameEn: 'Gift Boxes', nameAr: 'صناديق الهدايا'}
 ];
 
-async function main(){
-  for(const category of categories)await prisma.category.upsert({where:{slug:category.slug},create:category,update:{nameEn:category.nameEn,nameAr:category.nameAr,archivedAt:null}});
-  const cakes=await prisma.category.findUniqueOrThrow({where:{slug:'cakes'}});
-  const pastries=await prisma.category.findUniqueOrThrow({where:{slug:'pastries'}});
-  const products=[
-    {slug:'chocolate-truffle-cake',categoryId:cakes.id,nameEn:'Chocolate Truffle Cake',nameAr:'كيكة تروفيل الشوكولاتة',descriptionEn:'Rich dark chocolate layers with silky truffle ganache.',descriptionAr:'طبقات شوكولاتة داكنة غنية مع غاناش الترافل الناعم.',priceFils:8500,capacityPoints:8,leadDays:2},
-    {slug:'lotus-cheesecake',categoryId:cakes.id,nameEn:'Lotus Cheesecake',nameAr:'تشيز كيك اللوتس',descriptionEn:'Creamy cheesecake on a buttery Lotus biscuit base.',descriptionAr:'تشيز كيك كريمي على قاعدة بسكويت لوتس بالزبدة.',priceFils:6500,capacityPoints:8,leadDays:2},
-    {slug:'caramel-croissant',categoryId:pastries.id,nameEn:'Salted Caramel Croissant',nameAr:'كرواسون الكراميل المملح',descriptionEn:'Buttery croissant with salted caramel cream.',descriptionAr:'كرواسون بالزبدة محشو بكريمة الكراميل المملح.',priceFils:1500,capacityPoints:1,leadDays:1}
-  ];
-  for(const product of products)await prisma.product.upsert({where:{slug:product.slug},create:{...product,published:true,active:true},update:{...product,published:true,active:true,archivedAt:null}});
-  const truffle=await prisma.product.findUniqueOrThrow({where:{slug:'chocolate-truffle-cake'}});
-  await prisma.productVariant.upsert({where:{id:'seed-truffle-six'},create:{id:'seed-truffle-six',productId:truffle.id,nameEn:'Serves 6–8',nameAr:'يكفي ٦–٨',priceFils:0,capacityPoints:8,leadDays:2},update:{priceFils:0,capacityPoints:8,leadDays:2,active:true}});
-  await prisma.productVariant.upsert({where:{id:'seed-truffle-ten'},create:{id:'seed-truffle-ten',productId:truffle.id,nameEn:'Serves 10–12',nameAr:'يكفي ١٠–١٢',priceFils:2500,capacityPoints:12,leadDays:3},update:{priceFils:2500,capacityPoints:12,leadDays:3,active:true}});
-  const salmiya=await prisma.deliveryArea.upsert({where:{id:'seed-salmiya'},create:{id:'seed-salmiya',nameEn:'Salmiya',nameAr:'السالمية',feeFils:1500},update:{feeFils:1500,active:true}});
-  for(let offset=1;offset<=30;offset++){
-    const date=new Date();date.setUTCHours(0,0,0,0);date.setUTCDate(date.getUTCDate()+offset);if(date.getUTCDay()===5)continue;
-    await prisma.productionCapacity.upsert({where:{date},create:{date,totalPoints:60},update:{totalPoints:60}});
-    for(const [windowStart,windowEnd] of [['10:00','13:00'],['16:00','19:00']])await prisma.deliverySlot.upsert({where:{areaId_date_windowStart:{areaId:salmiya.id,date,windowStart}},create:{areaId:salmiya.id,date,windowStart,windowEnd,capacity:20},update:{windowEnd,capacity:20}});
+async function seedCategories() {
+  for (const category of categories) {
+    await prisma.category.upsert({
+      where: {slug: category.slug},
+      create: category,
+      update: {nameEn: category.nameEn, nameAr: category.nameAr, archivedAt: null}
+    });
   }
+}
+
+async function seedProducts() {
+  const cakes = await prisma.category.findUniqueOrThrow({where: {slug: 'cakes'}});
+  const pastries = await prisma.category.findUniqueOrThrow({where: {slug: 'pastries'}});
+
+  const products = [
+    {
+      slug: 'chocolate-truffle-cake',
+      categoryId: cakes.id,
+      nameEn: 'Chocolate Truffle Cake',
+      nameAr: 'كيكة تروفيل الشوكولاتة',
+      descriptionEn: 'Rich dark chocolate layers with silky truffle ganache.',
+      descriptionAr: 'طبقات شوكولاتة داكنة غنية مع غاناش الترافل الناعم.',
+      priceFils: 8500,
+      capacityPoints: 8,
+      leadDays: 2
+    },
+    {
+      slug: 'lotus-cheesecake',
+      categoryId: cakes.id,
+      nameEn: 'Lotus Cheesecake',
+      nameAr: 'تشيز كيك اللوتس',
+      descriptionEn: 'Creamy cheesecake on a buttery Lotus biscuit base.',
+      descriptionAr: 'تشيز كيك كريمي على قاعدة بسكويت لوتس بالزبدة.',
+      priceFils: 6500,
+      capacityPoints: 8,
+      leadDays: 2
+    },
+    {
+      slug: 'caramel-croissant',
+      categoryId: pastries.id,
+      nameEn: 'Salted Caramel Croissant',
+      nameAr: 'كرواسون الكراميل المملح',
+      descriptionEn: 'Buttery croissant with salted caramel cream.',
+      descriptionAr: 'كرواسون بالزبدة محشو بكريمة الكراميل المملح.',
+      priceFils: 1500,
+      capacityPoints: 1,
+      leadDays: 1
+    }
+  ];
+
+  for (const product of products) {
+    await prisma.product.upsert({
+      where: {slug: product.slug},
+      create: {...product, published: true, active: true},
+      update: {...product, published: true, active: true, archivedAt: null}
+    });
+  }
+}
+
+async function seedVariants() {
+  const truffle = await prisma.product.findUniqueOrThrow({where: {slug: 'chocolate-truffle-cake'}});
+
+  const variants = [
+    {id: 'seed-truffle-six', nameEn: 'Serves 6–8', nameAr: 'يكفي ٦–٨', priceFils: 0, capacityPoints: 8, leadDays: 2},
+    {id: 'seed-truffle-ten', nameEn: 'Serves 10–12', nameAr: 'يكفي ١٠–١٢', priceFils: 2500, capacityPoints: 12, leadDays: 3}
+  ];
+
+  for (const variant of variants) {
+    await prisma.productVariant.upsert({
+      where: {id: variant.id},
+      create: {...variant, productId: truffle.id},
+      update: {
+        priceFils: variant.priceFils,
+        capacityPoints: variant.capacityPoints,
+        leadDays: variant.leadDays,
+        active: true
+      }
+    });
+  }
+}
+
+async function seedCapacityAndSlots() {
+  const salmiya = await prisma.deliveryArea.upsert({
+    where: {id: 'seed-salmiya'},
+    create: {id: 'seed-salmiya', nameEn: 'Salmiya', nameAr: 'السالمية', feeFils: 1500},
+    update: {feeFils: 1500, active: true}
+  });
+
+  const windows = [
+    ['10:00', '13:00'],
+    ['16:00', '19:00']
+  ];
+
+  for (let offset = 1; offset <= 30; offset++) {
+    const date = new Date();
+    date.setUTCHours(0, 0, 0, 0);
+    date.setUTCDate(date.getUTCDate() + offset);
+    if (date.getUTCDay() === 5) continue;
+
+    await prisma.productionCapacity.upsert({
+      where: {date},
+      create: {date, totalPoints: 60},
+      update: {totalPoints: 60}
+    });
+
+    for (const [windowStart, windowEnd] of windows) {
+      await prisma.deliverySlot.upsert({
+        where: {areaId_date_windowStart: {areaId: salmiya.id, date, windowStart}},
+        create: {areaId: salmiya.id, date, windowStart, windowEnd, capacity: 20},
+        update: {windowEnd, capacity: 20}
+      });
+    }
+  }
+}
+
+async function main() {
+  await seedCategories();
+  await seedProducts();
+  await seedVariants();
+  await seedCapacityAndSlots();
   console.log(`Seeded ${await prisma.product.count()} products, variants, and the Salmiya delivery area.`);
 }
 
-main().finally(()=>prisma.$disconnect());
+main()
+  .catch(error => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(() => prisma.$disconnect());

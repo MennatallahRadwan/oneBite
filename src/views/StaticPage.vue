@@ -1,1 +1,121 @@
-<script setup lang="ts">import {ref} from 'vue';import {img} from '../data';import PageHero from '../components/PageHero.vue';const props=defineProps<{type:string}>();const open=ref(0);const faqs=['How far in advance should I order?','Do you offer same-day delivery?','Can I customize a cake?','What are your delivery fees?','How should I store my order?','Do you cater for allergies?'];</script><template><template v-if="type==='about'"><PageHero eyebrow="Our Story" title="A little bakery with a big heart" subtitle="Creating beautiful, memorable bites in Kuwait since 2021."/><section class="section"><div class="container story-grid"><img :src="img('1556909114-f6e7ad7d3136')"><div><span class="eyebrow">How It Started</span><h2>From one kitchen to thousands of celebrations</h2><p>One Bite began with a simple belief: dessert should do more than taste good. It should bring people together, make ordinary moments feel special and become part of the memories we keep.</p><p>We bake every product in small batches, choose ingredients with care and put the same attention into a weekday pastry as we do a celebration cake.</p></div></div></section><section class="section alt"><div class="container values"><article><b>01</b><h3>Fresh, always</h3><p>We bake daily and never compromise on freshness.</p></article><article><b>02</b><h3>Made by hand</h3><p>Every finish, garnish and package gets a human touch.</p></article><article><b>03</b><h3>Made for Kuwait</h3><p>Global inspiration, local tastes and dependable delivery.</p></article></div></section></template><template v-else-if="type==='faq'"><PageHero eyebrow="Help Center" title="Frequently Asked Questions" subtitle="Everything you need to know about ordering from One Bite."/><section class="section"><div class="container faq-list"><article v-for="(f,i) in faqs"><button @click="open=open===i?-1:i"><b>{{f}}</b><span>{{open===i?'−':'+'}}</span></button><p v-if="open===i">Most orders can be placed 24 hours ahead. Same-day delivery is available for selected products when ordered before 2 PM, subject to capacity and delivery area.</p></article></div></section></template><template v-else><PageHero eyebrow="We’re Here to Help" title="Contact One Bite" subtitle="Questions, custom orders or feedback? We would love to hear from you."/><section class="section"><div class="container contact-grid"><div><h2>Get in touch</h2><p>Our customer care team is available daily from 9 AM to 10 PM.</p><div class="contact-card"><b>WhatsApp & Phone</b><p>+965 2222 1000</p></div><div class="contact-card"><b>Email</b><p>hello@onebite.com</p></div><div class="contact-card"><b>Bakery</b><p>Kuwait City, Kuwait</p></div></div><form class="contact-form" @submit.prevent><label>Name<input placeholder="Your name"></label><label>Email<input placeholder="you@example.com"></label><label>Topic<select><option>General question</option><option>Custom order</option><option>Existing order</option><option>Feedback</option></select></label><label>Message<textarea rows="6" placeholder="How can we help?"></textarea></label><button class="btn primary">Send Message</button></form></div></section></template></template>
+<script setup lang="ts">
+import {ref} from 'vue';
+import {img} from '../data';
+import PageHero from '../components/PageHero.vue';
+
+defineProps<{type: string}>();
+
+const open = ref(0);
+
+const faqs = [
+  'How far in advance should I order?',
+  'Do you offer same-day delivery?',
+  'Can I customize a cake?',
+  'What are your delivery fees?',
+  'How should I store my order?',
+  'Do you cater for allergies?'
+];
+
+const topics = ['General question', 'Custom order', 'Existing order', 'Feedback'];
+
+const values = [
+  {number: '01', title: 'Fresh, always', copy: 'We bake daily and never compromise on freshness.'},
+  {number: '02', title: 'Made by hand', copy: 'Every finish, garnish and package gets a human touch.'},
+  {number: '03', title: 'Made for Kuwait', copy: 'Global inspiration, local tastes and dependable delivery.'}
+];
+</script>
+
+<template>
+  <template v-if="type === 'about'">
+    <PageHero
+      eyebrow="Our Story"
+      title="A little bakery with a big heart"
+      subtitle="Creating beautiful, memorable bites in Kuwait since 2021."
+    />
+
+    <section class="section">
+      <div class="container story-grid">
+        <img :src="img('1556909114-f6e7ad7d3136')">
+        <div>
+          <span class="eyebrow">How It Started</span>
+          <h2>From one kitchen to thousands of celebrations</h2>
+          <p>
+            One Bite began with a simple belief: dessert should do more than taste good. It should
+            bring people together, make ordinary moments feel special and become part of the memories
+            we keep.
+          </p>
+          <p>
+            We bake every product in small batches, choose ingredients with care and put the same
+            attention into a weekday pastry as we do a celebration cake.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt">
+      <div class="container values">
+        <article v-for="value in values" :key="value.number">
+          <b>{{ value.number }}</b>
+          <h3>{{ value.title }}</h3>
+          <p>{{ value.copy }}</p>
+        </article>
+      </div>
+    </section>
+  </template>
+
+  <template v-else-if="type === 'faq'">
+    <PageHero
+      eyebrow="Help Center"
+      title="Frequently Asked Questions"
+      subtitle="Everything you need to know about ordering from One Bite."
+    />
+
+    <section class="section">
+      <div class="container faq-list">
+        <article v-for="(question, index) in faqs" :key="question">
+          <button @click="open = open === index ? -1 : index">
+            <b>{{ question }}</b>
+            <span>{{ open === index ? '−' : '+' }}</span>
+          </button>
+          <p v-if="open === index">
+            Most orders can be placed 24 hours ahead. Same-day delivery is available for selected
+            products when ordered before 2 PM, subject to capacity and delivery area.
+          </p>
+        </article>
+      </div>
+    </section>
+  </template>
+
+  <template v-else>
+    <PageHero
+      eyebrow="We’re Here to Help"
+      title="Contact One Bite"
+      subtitle="Questions, custom orders or feedback? We would love to hear from you."
+    />
+
+    <section class="section">
+      <div class="container contact-grid">
+        <div>
+          <h2>Get in touch</h2>
+          <p>Our customer care team is available daily from 9 AM to 10 PM.</p>
+          <div class="contact-card"><b>WhatsApp &amp; Phone</b><p>+965 2222 1000</p></div>
+          <div class="contact-card"><b>Email</b><p>hello@onebite.com</p></div>
+          <div class="contact-card"><b>Bakery</b><p>Kuwait City, Kuwait</p></div>
+        </div>
+
+        <form class="contact-form" @submit.prevent>
+          <label>Name<input placeholder="Your name"></label>
+          <label>Email<input placeholder="you@example.com"></label>
+          <label>
+            Topic
+            <select>
+              <option v-for="topic in topics" :key="topic">{{ topic }}</option>
+            </select>
+          </label>
+          <label>Message<textarea rows="6" placeholder="How can we help?"></textarea></label>
+          <button class="btn primary">Send Message</button>
+        </form>
+      </div>
+    </section>
+  </template>
+</template>

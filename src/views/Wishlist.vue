@@ -1,1 +1,33 @@
-<script setup lang="ts">import {computed} from 'vue';import {Heart} from 'lucide-vue-next';import {products} from '../data';import {useShopStore} from '../stores/shop';import ProductCard from '../components/ProductCard.vue';import PageHero from '../components/PageHero.vue';const store=useShopStore();const list=computed(()=>products.filter(p=>store.wishlist.includes(p.id)));</script><template><PageHero eyebrow="Saved for Later" title="Your Wishlist" subtitle="All the sweet things you have your eye on."/><section class="section"><div class="container"><div v-if="!list.length" class="empty"><Heart :size="48"/><h2>No favorites yet</h2><p>Tap the heart on any product to save it here.</p><RouterLink class="btn primary" to="/shop">Explore the Menu</RouterLink></div><div v-else class="product-grid"><ProductCard v-for="p in list" :key="p.id" :product="p"/></div></div></section></template>
+<script setup lang="ts">
+import {computed} from 'vue';
+import {Heart} from 'lucide-vue-next';
+import {products} from '../data';
+import {useShopStore} from '../stores/shop';
+import ProductCard from '../components/ProductCard.vue';
+import PageHero from '../components/PageHero.vue';
+
+const store = useShopStore();
+const list = computed(() => products.filter(product => store.wishlist.includes(product.id)));
+</script>
+
+<template>
+  <PageHero
+    eyebrow="Saved for Later"
+    title="Your Wishlist"
+    subtitle="All the sweet things you have your eye on."
+  />
+
+  <section class="section">
+    <div class="container">
+      <div v-if="!list.length" class="empty">
+        <Heart :size="48"/>
+        <h2>No favorites yet</h2>
+        <p>Tap the heart on any product to save it here.</p>
+        <RouterLink class="btn primary" to="/shop">Explore the Menu</RouterLink>
+      </div>
+      <div v-else class="product-grid">
+        <ProductCard v-for="product in list" :key="product.id" :product="product"/>
+      </div>
+    </div>
+  </section>
+</template>

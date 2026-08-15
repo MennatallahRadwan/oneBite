@@ -1,2 +1,47 @@
-<script setup lang="ts">import {ref} from 'vue';import {Menu,X,Search,Heart,ShoppingBag,User} from 'lucide-vue-next';import {useShopStore} from '../stores/shop';const open=ref(false);const store=useShopStore();</script>
-<template><div class="announcement">Made to order · Kuwait delivery · Cash on delivery only</div><header class="header"><div class="container nav"><RouterLink to="/" class="brand"><span class="brand-mark">OB</span><span><b>ONE BITE</b><small>premium bakery</small></span></RouterLink><nav :class="['navlinks',{open}]"><RouterLink to="/shop">Shop</RouterLink><RouterLink to="/categories">Categories</RouterLink><RouterLink to="/best-sellers">Best Sellers</RouterLink><RouterLink to="/seasonal">Seasonal</RouterLink><RouterLink to="/gift-boxes">Gift Boxes</RouterLink><RouterLink to="/about">Our Story</RouterLink></nav><div class="actions"><RouterLink to="/search"><Search :size="20"/></RouterLink><RouterLink to="/profile"><User :size="20"/></RouterLink><RouterLink to="/wishlist" class="badge-wrap"><Heart :size="20"/><em v-if="store.wishlist.length">{{store.wishlist.length}}</em></RouterLink><RouterLink to="/cart" class="badge-wrap"><ShoppingBag :size="20"/><em v-if="store.cartCount">{{store.cartCount}}</em></RouterLink><button class="menu" @click="open=!open"><X v-if="open"/><Menu v-else/></button></div></div></header></template>
+<script setup lang="ts">
+import {ref} from 'vue';
+import {Menu, X, Search, Heart, ShoppingBag, User} from 'lucide-vue-next';
+import {useShopStore} from '../stores/shop';
+
+const open = ref(false);
+const store = useShopStore();
+</script>
+
+<template>
+  <div class="announcement">Made to order · Kuwait delivery · Cash on delivery only</div>
+
+  <header class="header">
+    <div class="container nav">
+      <RouterLink to="/" class="brand">
+        <span class="brand-mark">OB</span>
+        <span><b>ONE BITE</b><small>premium bakery</small></span>
+      </RouterLink>
+
+      <nav :class="['navlinks', {open}]">
+        <RouterLink to="/shop">Shop</RouterLink>
+        <RouterLink to="/categories">Categories</RouterLink>
+        <RouterLink to="/best-sellers">Best Sellers</RouterLink>
+        <RouterLink to="/seasonal">Seasonal</RouterLink>
+        <RouterLink to="/gift-boxes">Gift Boxes</RouterLink>
+        <RouterLink to="/about">Our Story</RouterLink>
+      </nav>
+
+      <div class="actions">
+        <RouterLink to="/search"><Search :size="20"/></RouterLink>
+        <RouterLink to="/profile"><User :size="20"/></RouterLink>
+        <RouterLink to="/wishlist" class="badge-wrap">
+          <Heart :size="20"/>
+          <em v-if="store.wishlist.length">{{ store.wishlist.length }}</em>
+        </RouterLink>
+        <RouterLink to="/cart" class="badge-wrap">
+          <ShoppingBag :size="20"/>
+          <em v-if="store.cartCount">{{ store.cartCount }}</em>
+        </RouterLink>
+        <button class="menu" @click="open = !open">
+          <X v-if="open"/>
+          <Menu v-else/>
+        </button>
+      </div>
+    </div>
+  </header>
+</template>
