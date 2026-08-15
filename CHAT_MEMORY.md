@@ -13,70 +13,84 @@
 - Order, fulfilment, cancellation, and COD collection are independent states.
 - No automated SMS, WhatsApp, email, browser push, recipe subscriptions, fake reviews, ratings, counts, or delivery promises.
 
-## Implemented frontend work
+## Stack
 
-- Removed fabricated ratings, reviews, static category counts, card payment UI, free-delivery threshold messaging, and same-day delivery promises.
-- Product pages now expose predefined size/variant choices, fixed packaging add-ons, and short cake-text UI.
-- Checkout is COD-only and collects written delivery, recipient, gift, and delivery-window request data.
-- Success UI says **Awaiting bakery confirmation** and does not claim an automated notification.
-- Added a typed frontend API-client foundation at `src/api/client.ts`.
+- Frontend: Vue 3 + Vite + vue-router + Pinia, hand-written CSS in `src/style.css`. No Tailwind, no i18n library.
+- Backend: Express 5 + Zod + Prisma 6 + PostgreSQL, in `server/src/`.
+- Tests: Vitest + supertest, integration only, in `server/src/*.test.ts`. They run against the **development database**.
+- Single root `package.json`. Sources are formatted multi-line; the original single-line style was removed.
 
-## Backend foundation
+## Backend
 
-- Express API source is in `server/src/`.
-- Implemented endpoints:
-  - `GET /api/v1/health`
-  - `GET /api/v1/catalog/categories`
-  - `GET /api/v1/catalog/products`
-  - `GET /api/v1/catalog/products/:slug`
-  - `POST /api/v1/availability/earliest`
-  - `POST /api/v1/checkout/quote`
-  - `POST /api/v1/orders`
-  - Tracking placeholders.
-- Includes Zod validation, Helmet, CORS, rate limiting, Pino HTTP logs, and request IDs.
-- Availability uses combined cart points and treats pending reservations as capacity-consuming.
-- The API currently uses in-memory catalog and reservation data. Prisma persistence is the next required implementation step.
+Endpoints under `/api/v1`:
+
+- `GET /health`
+- `GET /catalog/categories` — bilingual names, descriptions, image, published-product count
+- `GET /catalog/products`, `GET /catalog/products/:slug` — full storefront fields plus active variants and add-ons
+- `GET /delivery/areas` — active areas with fees
+- `POST /availability/earliest`, `POST /checkout/quote`, `POST /orders`
+- `GET /tracking/:token`, `POST /tracking/lookup`
+- Owner: `POST /owner/auth/login`, `POST /owner/auth/verify-totp`, `POST /owner/auth/logout`, `GET /owner/me`, `GET /owner/orders`, `PATCH /owner/orders/:publicNumber`
+
+Includes Zod validation, Helmet, CORS, per-route rate limiting, Pino HTTP logs, and request IDs.
+
+- Owner auth is hand-rolled in `server/src/owner-auth.ts`: scrypt password hashing, AES-256-GCM-encrypted TOTP secrets, RFC-6238 TOTP, and DB-backed cookie sessions. Setup is documented in `ADMIN_SETUP.md`.
+- `server/src/cart-service.ts` resolves cart lines into prices and capacity points and is the single source of that arithmetic; both `availability-service.ts` and `order-service.ts` use it. A variant **replaces** the product's capacity points and **adds** its price; add-ons and cake text add both. Lead time comes from the chosen variant.
+- Orders snapshot product names, variant name, add-ons, cake text, allergens and unit price as text, so later catalog edits cannot change what the bakery reads.
+- Writes use Serializable transactions with conditional `updateMany` guards on production points and slot capacity.
+
+## Catalog
+
+PostgreSQL is the single source of truth. `server/prisma/seed.ts` holds the whole catalog — 8 categories, 13 products with images, tags, servings, allergens and flags, and every product's variants, add-ons and cake-text limits — plus 7 Kuwait delivery areas and a 30-day capacity/slot horizon.
+
+The storefront reads it through `src/stores/catalog.ts`, which fetches categories and products once per session and converts fils to KWD. `src/data.ts` now holds only shared types and the `img`/`money` helpers.
+
+Seed rules worth keeping:
+
+- A product's base `capacityPoints` and `leadDays` follow its **smallest** variant.
+- Variants and add-ons use deterministic `seed-<slug>-<option>` ids, and the seed deletes options it no longer defines, so re-running it never leaves stale choices selectable.
 
 ## PostgreSQL and Prisma
 
-- Docker database service is configured in `docker-compose.yml`.
-- Prisma schema: `server/prisma/schema.prisma`.
-- Local environment: `.env` (ignored by Git). Its `DATABASE_URL` must match the password currently in `docker-compose.yml`.
-- The local database has been initialized and verified with these 11 tables:
-  `User`, `Category`, `Product`, `ProductVariant`, `ProductAddon`, `DeliveryArea`, `DeliverySlot`, `ProductionCapacity`, `Order`, `OrderItem`, and `CapacityReservation`.
+- Docker database service is configured in `docker-compose.yml` (untracked; it is in `.gitignore`).
+- Prisma schema: `server/prisma/schema.prisma`. Local environment: `.env` (ignored by Git); see `.env.example`.
 - Verify tables:
 
   ```powershell
   docker compose exec postgres psql -U onebite -d onebite -c "\dt"
   ```
 
-- Prisma CLI migration commands currently report a generic local **Schema engine error** on this Windows machine, even with valid schema and reachable PostgreSQL. The initial schema was therefore applied through Prisma-generated SQL (`prisma migrate diff ... --script`) piped to `psql`.
-- Do not reset the Docker volume if it contains wanted data. `docker compose down -v` deletes the database volume.
+- Prisma CLI **migrate** commands report a generic local **Schema engine error** on this Windows machine. Schema changes are therefore applied as SQL scripts kept in `server/prisma/manual-migrations/`:
 
-## Verification completed
+  ```powershell
+  npx prisma migrate diff --from-schema-datasource server/prisma/schema.prisma --to-schema-datamodel server/prisma/schema.prisma --script > server\prisma\manual-migrations\<name>.sql
+  docker compose exec -T postgres psql -U onebite -d onebite -v ON_ERROR_STOP=1 < server\prisma\manual-migrations\<name>.sql
+  npm.cmd run prisma:generate
+  ```
+
+  Re-running the diff afterwards should print an empty migration; that is the drift check.
+
+- `prisma generate` fails with `EPERM` while any `npm run server:dev` process is running, because it holds the query-engine DLL. Stop the dev server first.
+- Do not reset the Docker volume if it contains wanted data. `docker compose down -v` deletes it.
+
+## Verification
 
 ```powershell
 npm.cmd run build
 npm.cmd run server:test
 ```
 
-Both passed after dependencies were installed.
-
-## Git history from this work
-
-- `e2bb108 feat: add one bite v1 storefront and api foundation`
-- `abc3481 fix: configure local prisma postgres schema`
+`server:test` seeds the development database first, so seed changes must stay idempotent upserts.
 
 ## Known work remaining
 
-- Replace in-memory API data with real Prisma/PostgreSQL transactions and seeds.
-- Add migrations/history strategy after resolving the local Prisma schema-engine issue.
-- Owner authentication, secure sessions, mandatory 2FA, and audit logging.
-- Admin dashboard and CRUD for catalog, capacity, delivery, promotions, content, reviews, and orders.
-- Customer accounts, addresses, wishlists, true order tracking, cancellations, COD workflows, and reviews.
-- Full English/Arabic localized routes and complete RTL behavior.
+- Full English/Arabic localized routes and complete RTL behavior. The backend already stores both languages; the storefront renders only English and has no locale toggle.
+- Customer accounts, addresses, wishlist sync, cancellations, and COD workflows. `Order.userId` is always null and the wishlist is localStorage-only.
+- Admin CRUD beyond order confirm/reject: catalog, production capacity, delivery areas and slots, promotions, content.
+- The checkout quote store and the MFA challenge store are in-process `Map`s in `app.ts` and `owner-auth.ts`. They do not survive a restart and break with more than one instance; both belong in the database.
+- Expired sessions are never purged.
+- The API's error handler swallows the error without logging it.
+- Gift details collected at checkout are still not sent to the bakery, and the UI says so.
+- CORS does not set `credentials: true` and the API client does not send `credentials: 'include'`, so owner auth only works same-origin through the Vite dev proxy.
 - SEO metadata/sitemap, object storage, CI, and deployment.
-
-## Working-tree note
-
-Generated `dist/`, `tsconfig.app.tsbuildinfo`, and tracked `node_modules` files may show as modified after local builds/dependency installation. They were intentionally not included in the focused commits above.
+- `dist/` and `node_modules/` are tracked in Git and always show as modified. Stage commits with explicit paths; never `git add -A`.
