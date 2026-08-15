@@ -74,6 +74,18 @@ describe('order reservation', () => {
       .send({orderNumber: placed.body.orderNumber, phone: '96590000000'});
     expect(lookup.body.trackingToken).toBe(placed.body.trackingToken);
 
+    // The stored number is '+96590000000'; a customer who omits the country
+    // code, or spaces it out, still finds their order.
+    const localLookup = await request(app)
+      .post('/api/v1/tracking/lookup')
+      .send({orderNumber: placed.body.orderNumber, phone: '9000 0000'});
+    expect(localLookup.body.trackingToken).toBe(placed.body.trackingToken);
+
+    const wrongPhone = await request(app)
+      .post('/api/v1/tracking/lookup')
+      .send({orderNumber: placed.body.orderNumber, phone: '90000001'});
+    expect(wrongPhone.status).toBe(404);
+
     created = {
       orderNumber: saved.publicNumber,
       date: quote.body.earliestSlot.date,

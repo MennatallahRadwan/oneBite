@@ -97,7 +97,10 @@ const publicProductShape = {
   },
   addons: {select: optionFields, where: {active: true}, orderBy: {priceFils: 'asc'}}
 } as const;
-const normalizePhone = (value: string) => value.replace(/\D/g, '');
+// Kuwait subscriber numbers are 8 digits. Comparing the trailing 8 lets a
+// customer look their order up whether or not they repeat the +965 they typed
+// at checkout, without loosening the match to something guessable.
+const normalizePhone = (value: string) => value.replace(/\D/g, '').slice(-8);
 const authLimiter = () => rateLimit({windowMs: 900000, limit: 5});
 
 function validationError(res: express.Response, message: string) {
