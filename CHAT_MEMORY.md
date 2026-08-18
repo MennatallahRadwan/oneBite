@@ -30,7 +30,13 @@ Endpoints under `/api/v1`:
 - `GET /delivery/areas` — active areas with fees
 - `POST /availability/earliest`, `POST /checkout/quote`, `POST /orders`
 - `GET /tracking/:token`, `POST /tracking/lookup`
-- Owner: `POST /owner/auth/login`, `POST /owner/auth/verify-totp`, `POST /owner/auth/logout`, `GET /owner/me`, `GET /owner/orders`, `PATCH /owner/orders/:publicNumber`
+- Owner: everything under `/owner`, in `server/src/owner-router.ts` — auth (`auth/login`, `auth/verify-totp`, `auth/logout`, `me`), orders (`orders`, `PATCH orders/:publicNumber`), and admin CRUD:
+  - `categories`, `POST categories`, `PATCH categories/:id`
+  - `products`, `products/:id`, `POST products`, `PATCH products/:id`
+  - `POST products/:id/variants`, `PATCH variants/:id`, `POST products/:id/addons`, `PATCH addons/:id`
+  - `delivery/areas`, `POST delivery/areas`, `PATCH delivery/areas/:id`
+  - `delivery/slots?from&to&areaId`, `POST delivery/slots`, `PATCH delivery/slots/:id`, `DELETE delivery/slots/:id`, `POST delivery/slots/generate`
+  - `production-capacity?from&to`, `PUT production-capacity`, `POST production-capacity/range`
 
 Includes Zod validation, Helmet, CORS, per-route rate limiting, Pino HTTP logs, and request IDs.
 
@@ -39,6 +45,14 @@ Includes Zod validation, Helmet, CORS, per-route rate limiting, Pino HTTP logs, 
 - Orders snapshot product names, variant name, add-ons, cake text, allergens and unit price as text, so later catalog edits cannot change what the bakery reads.
 - Writes use Serializable transactions with conditional `updateMany` guards on production points and slot capacity. `createReservedOrder` retries Postgres write conflicts (P2034/40001) and reports persistent contention as a 409, never a 500.
 - Checkout quotes (`Quote`) and owner MFA challenges (`MfaChallenge`) are database rows, not in-process state, so an open checkout or half-finished login survives a restart and works behind more than one instance. Both are **claimed with a conditional update before** the work they authorise, so a quote cannot produce two orders and a challenge cannot be replayed.
+- `server/src/owner-router.ts` mounts at `/api/v1/owner`; the session guard is one `router.use` after the auth routes. Handlers have no try/catch — Express 5 forwards a rejected promise to the app's error middleware, which is where `AdminError` (code + status) and `OrderLifecycleError` become responses. `server/src/http.ts` holds `validationError`, `unauthenticated` and `authLimiter`, shared with `app.ts`.
+- `server/src/admin-service.ts` is all the admin write logic. Rules worth keeping:
+  - Deletes are archive/deactivate only (`archivedAt`, `active`); nothing in the catalog is ever hard-deleted. Only an unreserved delivery slot can actually be removed.
+  - A product's `capacityPoints` and `leadDays` are **derived** from its cheapest active variant whenever it has one. `PATCH /products/:id` silently drops those two fields in that case, and every variant write re-syncs them. This mirrors the seed rule.
+  - A patch that ends up empty is answered from the row, because Prisma's `updateMany` matches nothing when handed no data and that would read as a 404.
+  - Capacity and slot capacity can never be set below what is already reserved (409). Bulk fills skip such days instead of failing, and report them as `held`.
+  - A delivery area with live orders cannot be renamed: orders store `areaName` as text and the reservation-release path looks the area back up by it.
+  - P2002 becomes a 409 `CONFLICT` naming the duplicate, not a 500. Ranges are capped at 180 days.
 - Expired sessions and old quotes are swept opportunistically — on successful login and on quote creation respectively. There is no scheduled job.
 
 ## Catalog
@@ -62,7 +76,7 @@ Seed rules worth keeping:
 - Money, counts and dates go through `Intl` with an `ar-KW` locale, so Arabic pages use Arabic-Indic digits and the Arabic currency symbol.
 - Server error messages are English. The API client throws `ApiError` carrying the error code and `src/i18n/errors.ts` translates from that code.
 - RTL is mostly handled by `dir=rtl` on flex/grid. `src/style.css` covers the rest: Arabic typeface stack, directional rows, `.dir-icon` for arrows that mean forward/back, and `dir="auto"` on mixed-language lines.
-- The owner dashboard (`/admin`) is deliberately English only — internal tool, not customer-facing.
+- The owner dashboard (`/admin`) is deliberately English only — internal tool, not customer-facing. It is a tab shell in `src/views/Admin.vue` over `src/components/admin/`: `OrdersPanel`, `ProductsPanel`, `CategoriesPanel`, `DeliveryPanel`, `CapacityPanel`, with shared helpers in `admin-ui.ts`. Each panel is keyed on the active tab and loads its own data on mount, so switching tabs picks up another tab's writes. The owner types KWD; `toFils`/`toKwd` convert. Styles are the `.admin-*` block at the end of `src/style.css`.
 
 ## PostgreSQL and Prisma
 
@@ -96,6 +110,8 @@ npm.cmd run server:test
 
 `server:test` seeds the development database first, so seed changes must stay idempotent upserts.
 
+`server/src/test-support/owner-session.ts` signs a throwaway owner in through the real login flow and returns the session cookie. Each test file passes its **own** email — files share one database and a shared owner would have its rows deleted mid-run. The admin tests work on dates ~120 days out, well clear of the seeded 30-day horizon the order tests reserve against.
+
 Test files run **one at a time** (`fileParallelism: false`). They share one database and reserve real production capacity and delivery slots, so in parallel they contend for the same earliest slots and interleave with each other's cleanup. That produced two distinct flakes: valid orders coming back 409, and connection-pool exhaustion surfacing as 500. The suite takes about 36s as a result.
 
 Any test that places an order **must release its capacity in `afterAll`** — the reservation, the order rows, `ProductionCapacity.usedPoints` and `DeliverySlot.reserved`. If slot counters ever drift, rebuild them from the active reservations rather than adjusting by hand:
@@ -112,7 +128,10 @@ UPDATE "DeliverySlot" s SET reserved = (
 ## Known work remaining
 
 - Customer accounts, addresses, wishlist sync, cancellations, and COD workflows. `Order.userId` is always null and the wishlist is localStorage-only.
-- Admin CRUD beyond order confirm/reject: catalog, production capacity, delivery areas and slots, promotions, content.
+- Promotions and content have no Prisma models at all, so there is nothing to administer yet; they need schema design before any CRUD.
+- The orders tab still only confirms and rejects. `PATCH /owner/orders/:publicNumber` already accepts `fulfilmentStatus` and `codStatus`, but nothing in the UI sets them.
+- The admin UI has not been clicked through in a browser — it type-checks and builds, and every endpoint behind it is covered by `admin-catalog.test.ts` and `admin-operations.test.ts`, but the panels themselves are unverified against a live session.
+- A newly created category stays off the storefront until it holds a published product; `GET /catalog/categories` filters on that. The dashboard shows the product count, but does not explain the rule.
 - Gift details collected at checkout are still not sent to the bakery, and the UI says so.
 - SEO metadata/sitemap (the `/ar` routes exist to be indexed, but nothing emits `hreflang`, per-page titles or a sitemap yet), object storage, CI, and deployment.
 - Several seeded products point at Unsplash photo IDs that resolve to unrelated images (a clock, a pile of sale tags). The image URLs are seed data, not code.

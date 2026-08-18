@@ -122,6 +122,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 const post = <T>(path: string, body: unknown) =>
   request<T>(path, {method: 'POST', body: JSON.stringify(body)});
 
+const patch = <T>(path: string, body: unknown) =>
+  request<T>(path, {method: 'PATCH', body: JSON.stringify(body)});
+
 export type ApiCategory = {
   slug: string;
   nameEn: string;
@@ -168,6 +171,111 @@ export type ApiProduct = {
 
 export type DeliveryArea = {nameEn: string; nameAr: string; feeFils: number};
 
+/**
+ * The owner's view of the catalog: unpublished and archived rows included, and
+ * every option whether or not it is still offered. The storefront types above
+ * deliberately show only what a customer may see.
+ */
+export type AdminCategory = {
+  id: string;
+  slug: string;
+  nameEn: string;
+  nameAr: string;
+  descriptionEn: string | null;
+  descriptionAr: string | null;
+  imageUrl: string | null;
+  sortOrder: number;
+  archivedAt: string | null;
+  productCount: number;
+};
+
+export type AdminOption = {
+  id: string;
+  nameEn: string;
+  nameAr: string;
+  priceFils: number;
+  capacityPoints: number;
+  active: boolean;
+};
+
+export type AdminVariant = AdminOption & {leadDays: number};
+
+export type AdminProduct = {
+  id: string;
+  slug: string;
+  categoryId: string;
+  nameEn: string;
+  nameAr: string;
+  descriptionEn: string;
+  descriptionAr: string;
+  priceFils: number;
+  capacityPoints: number;
+  leadDays: number;
+  published: boolean;
+  active: boolean;
+  imageUrl: string | null;
+  tags: string[];
+  tagsAr: string[];
+  servingsEn: string | null;
+  servingsAr: string | null;
+  allergens: string[];
+  bestSeller: boolean;
+  seasonal: boolean;
+  giftable: boolean;
+  cakeTextMaxLength: number | null;
+  cakeTextPriceFils: number | null;
+  cakeTextPoints: number | null;
+  archivedAt: string | null;
+  variants: AdminVariant[];
+  addons: AdminOption[];
+};
+
+export type AdminArea = {
+  id: string;
+  nameEn: string;
+  nameAr: string;
+  feeFils: number;
+  active: boolean;
+};
+
+export type AdminSlot = {
+  id: string;
+  areaId: string;
+  date: string;
+  windowStart: string;
+  windowEnd: string;
+  capacity: number;
+  reserved: number;
+};
+
+export type CapacityDay = {
+  id: string | null;
+  date: string;
+  weekday: number;
+  totalPoints: number | null;
+  usedPoints: number;
+};
+
+export type OptionInput = {
+  nameEn: string;
+  nameAr: string;
+  priceFils: number;
+  capacityPoints: number;
+  leadDays?: number;
+  active?: boolean;
+};
+
+export type SlotPlan = {
+  areaIds: string[];
+  from: string;
+  to: string;
+  windows: {start: string; end: string}[];
+  capacity: number;
+  skipWeekdays?: number[];
+};
+
+export type BulkResult = {written: number; held: number | string[]; days?: number};
+
 export const api = {
   categories: () => request<ApiCategory[]>('/catalog/categories'),
 
@@ -200,9 +308,56 @@ export const api = {
     logout: () => request<void>('/owner/auth/logout', {method: 'POST'}),
     orders: () => request<{items: OwnerOrder[]}>('/owner/orders'),
     updateOrder: (publicNumber: string, update: OwnerOrderUpdate) =>
-      request<OwnerOrder>(`/owner/orders/${encodeURIComponent(publicNumber)}`, {
-        method: 'PATCH',
-        body: JSON.stringify(update)
-      })
+      patch<OwnerOrder>(`/owner/orders/${encodeURIComponent(publicNumber)}`, update),
+    categories: () => request<{items: AdminCategory[]}>('/owner/categories'),
+    createCategory: (data: Partial<AdminCategory>) =>
+      post<AdminCategory>('/owner/categories', data),
+    updateCategory: (id: string, data: Partial<AdminCategory> & {archived?: boolean}) =>
+      patch<AdminCategory>(`/owner/categories/${id}`, data),
+
+    products: () => request<{items: AdminProduct[]}>('/owner/products'),
+    product: (id: string) => request<AdminProduct>(`/owner/products/${id}`),
+    createProduct: (data: Partial<AdminProduct>) => post<AdminProduct>('/owner/products', data),
+    updateProduct: (id: string, data: Partial<AdminProduct> & {archived?: boolean}) =>
+      patch<AdminProduct>(`/owner/products/${id}`, data),
+
+    createVariant: (productId: string, data: OptionInput) =>
+      post<AdminVariant>(`/owner/products/${productId}/variants`, data),
+    updateVariant: (id: string, data: Partial<OptionInput>) =>
+      patch<AdminVariant>(`/owner/variants/${id}`, data),
+    createAddon: (productId: string, data: OptionInput) =>
+      post<AdminOption>(`/owner/products/${productId}/addons`, data),
+    updateAddon: (id: string, data: Partial<OptionInput>) =>
+      patch<AdminOption>(`/owner/addons/${id}`, data),
+
+    areas: () => request<{items: AdminArea[]}>('/owner/delivery/areas'),
+    createArea: (data: Omit<AdminArea, 'id'>) => post<AdminArea>('/owner/delivery/areas', data),
+    updateArea: (id: string, data: Partial<Omit<AdminArea, 'id'>>) =>
+      patch<AdminArea>(`/owner/delivery/areas/${id}`, data),
+
+    slots: (from: string, to: string, areaId?: string) =>
+      request<{items: AdminSlot[]}>(
+        `/owner/delivery/slots?${new URLSearchParams({from, to, ...(areaId ? {areaId} : {})})}`
+      ),
+    upsertSlot: (data: Omit<AdminSlot, 'id' | 'reserved'>) =>
+      post<AdminSlot>('/owner/delivery/slots', data),
+    updateSlot: (id: string, capacity: number) =>
+      patch<AdminSlot>(`/owner/delivery/slots/${id}`, {capacity}),
+    deleteSlot: (id: string) => request<void>(`/owner/delivery/slots/${id}`, {method: 'DELETE'}),
+    generateSlots: (plan: SlotPlan) => post<BulkResult>('/owner/delivery/slots/generate', plan),
+
+    capacity: (from: string, to: string) =>
+      request<{items: CapacityDay[]}>(`/owner/production-capacity?${new URLSearchParams({from, to})}`),
+    setCapacity: (date: string, totalPoints: number) =>
+      request<CapacityDay>('/owner/production-capacity', {
+        method: 'PUT',
+        body: JSON.stringify({date, totalPoints})
+      }),
+    setCapacityRange: (
+      from: string,
+      to: string,
+      totalPoints: number,
+      skipWeekdays: number[] = []
+    ) => post<BulkResult>('/owner/production-capacity/range', {from, to, totalPoints, skipWeekdays})
   }
 };

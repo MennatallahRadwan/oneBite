@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import {rateLimit} from 'express-rate-limit';
 import pinoHttp from 'pino-http';
 import {randomUUID} from 'node:crypto';
 import {z} from 'zod';
@@ -10,8 +9,10 @@ import {calculateAvailability} from './availability-service.js';
 import {CartError, cartSubtotalFils, type CartLine} from './cart-service.js';
 import {createReservedOrder, OrderConflictError} from './order-service.js';
 import {claimQuote, createQuote} from './quote-service.js';
-import {beginOwnerLogin, completeOwnerLogin, logoutOwner, ownerFromRequest} from './owner-auth.js';
-import {OrderLifecycleError, updateOrderLifecycle} from './order-lifecycle-service.js';
+import {ownerRouter} from './owner-router.js';
+import {AdminError} from './admin-service.js';
+import {OrderLifecycleError} from './order-lifecycle-service.js';
+import {authLimiter, validationError} from './http.js';
 
 const cartItem = z.object({
   slug: z.string(),
@@ -43,20 +44,6 @@ const order = z.object({
     instructions: z.string().max(500).optional()
   })
 });
-
-const ownerLogin = z.object({
-  email: z.string().email(),
-  password: z.string().min(12).max(200)
-});
-
-const totp = z.object({code: z.string().regex(/^\d{6}$/)});
-
-const ownerOrderUpdate = z.object({
-  status: z.enum(['CONFIRMED', 'REJECTED', 'CANCELLED']).optional(),
-  fulfilmentStatus: z.enum(['NOT_STARTED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED', 'DELIVERY_ISSUE']).optional(),
-  codStatus: z.enum(['COD_DUE', 'COLLECTED', 'PARTIALLY_REFUNDED', 'REFUNDED', 'WAIVED']).optional(),
-  rejectionReason: z.string().min(2).max(500).optional()
-}).refine(value => Object.keys(value).length > 0);
 
 const trackingLookup = z.object({
   orderNumber: z.string().min(1),
@@ -98,19 +85,11 @@ const publicProductShape = {
   },
   addons: {select: optionFields, where: {active: true}, orderBy: {priceFils: 'asc'}}
 } as const;
+
 // Kuwait subscriber numbers are 8 digits. Comparing the trailing 8 lets a
 // customer look their order up whether or not they repeat the +965 they typed
 // at checkout, without loosening the match to something guessable.
 const normalizePhone = (value: string) => value.replace(/\D/g, '').slice(-8);
-const authLimiter = () => rateLimit({windowMs: 900000, limit: 5});
-
-function validationError(res: express.Response, message: string) {
-  return res.status(400).json({error: {code: 'VALIDATION_ERROR', message}});
-}
-
-function unauthenticated(res: express.Response) {
-  return res.status(401).json({error: {code: 'UNAUTHENTICATED', message: 'Owner authentication required'}});
-}
 
 export function createApp() {
   const app = express();
@@ -129,90 +108,7 @@ export function createApp() {
 
   app.get('/api/v1/health', (_, res) => res.json({ok: true}));
 
-  app.post('/api/v1/owner/auth/login', authLimiter(), async (req, res, next) => {
-    try {
-      const body = ownerLogin.safeParse(req.body);
-      if (!body.success) return validationError(res, 'Invalid login details');
-      const accepted = await beginOwnerLogin(body.data.email.toLowerCase(), body.data.password, res);
-      if (!accepted) return res.status(401).json({error: {code: 'INVALID_CREDENTIALS', message: 'Invalid owner credentials'}});
-      res.status(202).json({requiresTotp: true});
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.post('/api/v1/owner/auth/verify-totp', authLimiter(), async (req, res, next) => {
-    try {
-      const body = totp.safeParse(req.body);
-      if (!body.success) return validationError(res, 'Invalid verification code');
-      const owner = await completeOwnerLogin(body.data.code, req, res);
-      if (!owner) return res.status(401).json({error: {code: 'INVALID_TOTP', message: 'Invalid or expired verification code'}});
-      res.json({owner});
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.post('/api/v1/owner/auth/logout', async (req, res, next) => {
-    try {
-      await logoutOwner(req, res);
-      res.status(204).end();
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.get('/api/v1/owner/me', async (req, res, next) => {
-    try {
-      const owner = await ownerFromRequest(req);
-      if (!owner) return unauthenticated(res);
-      res.json({id: owner.id, name: owner.name, email: owner.email});
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.get('/api/v1/owner/orders', async (req, res, next) => {
-    try {
-      const owner = await ownerFromRequest(req);
-      if (!owner) return unauthenticated(res);
-      const items = await prisma.order.findMany({
-        orderBy: {createdAt: 'desc'},
-        take: 100,
-        select: {
-          publicNumber: true,
-          status: true,
-          fulfilmentStatus: true,
-          codStatus: true,
-          customerName: true,
-          customerPhone: true,
-          areaName: true,
-          deliveryWindow: true,
-          totalFils: true,
-          createdAt: true
-        }
-      });
-      res.json({items});
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.patch('/api/v1/owner/orders/:publicNumber', async (req, res, next) => {
-    try {
-      const owner = await ownerFromRequest(req);
-      if (!owner) return unauthenticated(res);
-      const body = ownerOrderUpdate.safeParse(req.body);
-      if (!body.success) return validationError(res, 'Invalid order update');
-      res.json(await updateOrderLifecycle(req.params.publicNumber, body.data));
-    } catch (error) {
-      if (error instanceof OrderLifecycleError) {
-        const status = error.message === 'Order not found.' ? 404 : 409;
-        return res.status(status).json({error: {code: 'ORDER_STATE_ERROR', message: error.message}});
-      }
-      next(error);
-    }
-  });
+  app.use('/api/v1/owner', ownerRouter());
 
   app.get('/api/v1/catalog/categories', async (_req, res, next) => {
     try {
@@ -404,6 +300,17 @@ export function createApp() {
   });
 
   app.use((error: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    // Owner-facing refusals — a duplicate slug, a capacity cut below what is
+    // reserved, an order already past the state being asked for — are answers,
+    // not failures, and carry their own status and code.
+    if (error instanceof AdminError) {
+      return res.status(error.status).json({error: {code: error.code, message: error.message}});
+    }
+    if (error instanceof OrderLifecycleError) {
+      const status = error.message === 'Order not found.' ? 404 : 409;
+      return res.status(status).json({error: {code: 'ORDER_STATE_ERROR', message: error.message}});
+    }
+
     // Without this the cause of every 500 was discarded, leaving nothing to
     // debug from. The response stays deliberately opaque to the caller.
     req.log?.error({err: error}, 'unhandled request error');

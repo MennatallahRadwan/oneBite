@@ -1,32 +1,41 @@
 <script setup lang="ts">
-import {onMounted, ref} from 'vue';
-import {Check, LogOut, LockKeyhole, Package, ShieldCheck, X} from 'lucide-vue-next';
-import {api, type OwnerOrder} from '../api/client';
-import {money} from '../data';
+import {computed, onMounted, ref} from 'vue';
+import {LockKeyhole, LogOut} from 'lucide-vue-next';
+import {api} from '../api/client';
+import {messageFrom} from '../components/admin/admin-ui';
+import OrdersPanel from '../components/admin/OrdersPanel.vue';
+import ProductsPanel from '../components/admin/ProductsPanel.vue';
+import CategoriesPanel from '../components/admin/CategoriesPanel.vue';
+import DeliveryPanel from '../components/admin/DeliveryPanel.vue';
+import CapacityPanel from '../components/admin/CapacityPanel.vue';
+
+const sections = [
+  {key: 'orders', label: 'Orders', component: OrdersPanel},
+  {key: 'products', label: 'Products', component: ProductsPanel},
+  {key: 'categories', label: 'Categories', component: CategoriesPanel},
+  {key: 'delivery', label: 'Delivery', component: DeliveryPanel},
+  {key: 'capacity', label: 'Capacity', component: CapacityPanel}
+] as const;
 
 const stage = ref<'loading' | 'password' | 'totp' | 'dashboard'>('loading');
+const section = ref<(typeof sections)[number]['key']>('orders');
 const email = ref('');
 const password = ref('');
 const code = ref('');
 const error = ref('');
 const busy = ref(false);
 const owner = ref('');
-const orders = ref<OwnerOrder[]>([]);
 
-const readable = (value: string) => value.replace(/_/g, ' ').toLowerCase();
-const messageFrom = (reason: unknown, fallback: string) =>
-  reason instanceof Error ? reason.message : fallback;
+const panel = computed(() => sections.find(tab => tab.key === section.value)!.component);
 
-async function loadDashboard() {
-  const [me, result] = await Promise.all([api.owner.me(), api.owner.orders()]);
-  owner.value = me.name;
-  orders.value = result.items;
+async function openDashboard() {
+  owner.value = (await api.owner.me()).name;
   stage.value = 'dashboard';
 }
 
 onMounted(async () => {
   try {
-    await loadDashboard();
+    await openDashboard();
   } catch {
     stage.value = 'password';
   }
@@ -52,7 +61,7 @@ async function submitTotp() {
   try {
     await api.owner.verifyTotp(code.value);
     code.value = '';
-    await loadDashboard();
+    await openDashboard();
   } catch (reason) {
     error.value = messageFrom(reason, 'Unable to verify this code.');
   } finally {
@@ -62,25 +71,7 @@ async function submitTotp() {
 
 async function logout() {
   await api.owner.logout();
-  orders.value = [];
   stage.value = 'password';
-}
-
-async function updateOrder(order: OwnerOrder, status: 'CONFIRMED' | 'REJECTED') {
-  const rejectionReason =
-    status === 'REJECTED' ? window.prompt('Why is this order being rejected?')?.trim() : undefined;
-  if (status === 'REJECTED' && !rejectionReason) return;
-
-  busy.value = true;
-  error.value = '';
-  try {
-    await api.owner.updateOrder(order.publicNumber, {status, rejectionReason});
-    await loadDashboard();
-  } catch (reason) {
-    error.value = messageFrom(reason, 'Unable to update the order.');
-  } finally {
-    busy.value = false;
-  }
 }
 </script>
 
@@ -142,36 +133,27 @@ async function updateOrder(order: OwnerOrder, status: 'CONFIRMED' | 'REJECTED') 
       <template v-else>
         <div class="checkout-head">
           <span class="eyebrow">One Bite owner</span>
-          <h1>Orders dashboard</h1>
+          <h1>Bakery dashboard</h1>
           <p>Signed in as {{ owner }}. Customer details are visible only to the owner.</p>
           <button class="btn secondary" @click="logout"><LogOut :size="17"/> Sign out</button>
         </div>
-        <p v-if="error" class="form-note" role="alert">{{ error }}</p>
 
-        <div class="account-panel">
-          <h2><Package/> Recent orders</h2>
-          <p v-if="!orders.length" class="form-note">No orders have been created yet.</p>
+        <nav class="admin-tabs">
+          <button
+            v-for="tab in sections"
+            :key="tab.key"
+            class="admin-tab"
+            :class="{active: section === tab.key}"
+            @click="section = tab.key"
+          >
+            {{ tab.label }}
+          </button>
+        </nav>
 
-          <div v-for="order in orders" :key="order.publicNumber" class="order-row">
-            <span>
-              <b>{{ order.publicNumber }}</b>
-              <small>
-                {{ order.customerName }} · {{ order.customerPhone }} · {{ order.areaName }} ·
-                {{ order.deliveryWindow }}
-              </small>
-            </span>
-            <strong>{{ money(order.totalFils / 1000) }}</strong>
-            <em><ShieldCheck :size="15"/> {{ readable(order.status) }}</em>
-            <span v-if="order.status === 'PENDING_CONFIRMATION'" class="order-actions">
-              <button class="btn primary" :disabled="busy" @click="updateOrder(order, 'CONFIRMED')">
-                <Check :size="15"/> Confirm
-              </button>
-              <button class="btn secondary" :disabled="busy" @click="updateOrder(order, 'REJECTED')">
-                <X :size="15"/> Reject
-              </button>
-            </span>
-          </div>
-        </div>
+        <!-- Keyed on the section so switching tabs mounts a fresh panel, and
+             each one loads its own data rather than trusting what a sibling
+             fetched earlier. -->
+        <component :is="panel" :key="section"/>
       </template>
     </div>
   </section>
