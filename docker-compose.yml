@@ -4,8 +4,9 @@ services:
     environment:
       POSTGRES_DB: onebite
       POSTGRES_USER: onebite
-      POSTGRES_PASSWORD: onebite
-    ports: ["5432:5432"]
+      POSTGRES_PASSWORD: freelancing
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports: ["127.0.0.1:5433:5432"]
     volumes: ["onebite-postgres:/var/lib/postgresql/data"]
 volumes:
   onebite-postgres:
