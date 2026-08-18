@@ -37,7 +37,9 @@ Includes Zod validation, Helmet, CORS, per-route rate limiting, Pino HTTP logs, 
 - Owner auth is hand-rolled in `server/src/owner-auth.ts`: scrypt password hashing, AES-256-GCM-encrypted TOTP secrets, RFC-6238 TOTP, and DB-backed cookie sessions. Setup is documented in `ADMIN_SETUP.md`.
 - `server/src/cart-service.ts` resolves cart lines into prices and capacity points and is the single source of that arithmetic; both `availability-service.ts` and `order-service.ts` use it. A variant **replaces** the product's capacity points and **adds** its price; add-ons and cake text add both. Lead time comes from the chosen variant.
 - Orders snapshot product names, variant name, add-ons, cake text, allergens and unit price as text, so later catalog edits cannot change what the bakery reads.
-- Writes use Serializable transactions with conditional `updateMany` guards on production points and slot capacity.
+- Writes use Serializable transactions with conditional `updateMany` guards on production points and slot capacity. `createReservedOrder` retries Postgres write conflicts (P2034/40001) and reports persistent contention as a 409, never a 500.
+- Checkout quotes (`Quote`) and owner MFA challenges (`MfaChallenge`) are database rows, not in-process state, so an open checkout or half-finished login survives a restart and works behind more than one instance. Both are **claimed with a conditional update before** the work they authorise, so a quote cannot produce two orders and a challenge cannot be replayed.
+- Expired sessions and old quotes are swept opportunistically — on successful login and on quote creation respectively. There is no scheduled job.
 
 ## Catalog
 
@@ -94,16 +96,26 @@ npm.cmd run server:test
 
 `server:test` seeds the development database first, so seed changes must stay idempotent upserts.
 
+Test files run **one at a time** (`fileParallelism: false`). They share one database and reserve real production capacity and delivery slots, so in parallel they contend for the same earliest slots and interleave with each other's cleanup. That produced two distinct flakes: valid orders coming back 409, and connection-pool exhaustion surfacing as 500. The suite takes about 36s as a result.
+
+Any test that places an order **must release its capacity in `afterAll`** — the reservation, the order rows, `ProductionCapacity.usedPoints` and `DeliverySlot.reserved`. If slot counters ever drift, rebuild them from the active reservations rather than adjusting by hand:
+
+```sql
+UPDATE "DeliverySlot" s SET reserved = (
+  SELECT count(*) FROM "Order" o
+    JOIN "DeliveryArea" a ON a."nameEn" = o."areaName"
+    JOIN "CapacityReservation" r ON r."orderId" = o.id AND r.active
+   WHERE a.id = s."areaId" AND r.date = s.date
+     AND o."deliveryWindow" = s."windowStart" || '–' || s."windowEnd");
+```
+
 ## Known work remaining
 
 - Customer accounts, addresses, wishlist sync, cancellations, and COD workflows. `Order.userId` is always null and the wishlist is localStorage-only.
 - Admin CRUD beyond order confirm/reject: catalog, production capacity, delivery areas and slots, promotions, content.
-- The checkout quote store and the MFA challenge store are in-process `Map`s in `app.ts` and `owner-auth.ts`. They do not survive a restart and break with more than one instance; both belong in the database.
-- Expired sessions are never purged.
-- The API's error handler swallows the error without logging it.
 - Gift details collected at checkout are still not sent to the bakery, and the UI says so.
-- CORS does not set `credentials: true` and the API client does not send `credentials: 'include'`, so owner auth only works same-origin through the Vite dev proxy.
 - SEO metadata/sitemap (the `/ar` routes exist to be indexed, but nothing emits `hreflang`, per-page titles or a sitemap yet), object storage, CI, and deployment.
 - Several seeded products point at Unsplash photo IDs that resolve to unrelated images (a clock, a pile of sale tags). The image URLs are seed data, not code.
-- Tests share the development database with no isolation and run in parallel. `server/vitest.config.ts` raises the timeout to accommodate that; a dedicated test database would be better.
-- `dist/` and `node_modules/` are tracked in Git and always show as modified. Stage commits with explicit paths; never `git add -A`.
+- Tests run against the **development** database, seeding and mutating it. A dedicated test database would remove the need for serial execution and manual capacity cleanup.
+- `docker-compose.yml` is listed in `.gitignore` yet still tracked. It is the only database setup in the repo, so untracking it would leave a fresh clone unable to start PostgreSQL — decide deliberately whether to track it properly or document setup elsewhere.
+- `CLIENT_ORIGIN` must be set to the real storefront origin in any deployment: CORS now sends credentials, which browsers reject against a wildcard origin.
