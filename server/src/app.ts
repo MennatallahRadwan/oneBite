@@ -80,6 +80,7 @@ const publicProductShape = {
   leadDays: true,
   imageUrl: true,
   tags: true,
+  tagsAr: true,
   servingsEn: true,
   servingsAr: true,
   allergens: true,

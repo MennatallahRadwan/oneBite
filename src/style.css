@@ -31,3 +31,6 @@
    Arabic, so direction is inferred per element via dir="auto". */
 .name-alt{font-size:12px;color:var(--muted);unicode-bidi:isolate}
 .name-alt.large{font-size:15px}
+/* Arrows that mean "forward"/"back" point the other way in RTL. Marked
+   explicitly so non-directional icons (bag, heart, truck) are left alone. */
+[dir=rtl] .dir-icon{transform:scaleX(-1)}

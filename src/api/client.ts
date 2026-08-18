@@ -148,6 +148,7 @@ export type ApiProduct = {
   leadDays: number;
   imageUrl: string | null;
   tags: string[];
+  tagsAr: string[];
   servingsEn: string | null;
   servingsAr: string | null;
   allergens: string[];

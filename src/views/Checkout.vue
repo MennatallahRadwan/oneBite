@@ -313,11 +313,11 @@ async function next() {
 
             <div class="checkout-actions">
               <button class="btn secondary" :disabled="step === 0 || loading" @click="step--">
-                <ArrowLeft :size="17"/> {{ t('checkout.back') }}
+                <ArrowLeft class="dir-icon" :size="17"/> {{ t('checkout.back') }}
               </button>
               <button class="btn primary" :disabled="loading" @click="next">
                 {{ loading ? t('checkout.wait') : step === 2 ? t('checkout.submit') : t('checkout.continue') }}
-                <ArrowRight v-if="!loading" :size="17"/>
+                <ArrowRight v-if="!loading" class="dir-icon" :size="17"/>
               </button>
             </div>
           </div>

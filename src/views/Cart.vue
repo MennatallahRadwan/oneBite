@@ -58,7 +58,7 @@ const store = useShopStore();
             <span>{{ t('cart.total') }}</span><b>{{ money(store.cartTotal) }}</b>
           </div>
           <AppLink class="btn primary full" to="/checkout">
-            {{ t('cart.checkout') }} <ArrowRight :size="17"/>
+            {{ t('cart.checkout') }} <ArrowRight class="dir-icon" :size="17"/>
           </AppLink>
           <p>{{ t('cart.note') }}</p>
         </aside>

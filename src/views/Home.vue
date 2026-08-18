@@ -34,7 +34,7 @@ const stats = computed(() => [
         <p>{{ t('home.hero.blurb') }}</p>
         <div class="button-row">
           <AppLink class="btn gold" to="/shop">
-            {{ t('home.hero.order') }} <ArrowRight :size="18"/>
+            {{ t('home.hero.order') }} <ArrowRight class="dir-icon" :size="18"/>
           </AppLink>
           <AppLink class="btn outline-light" to="/categories">{{ t('home.hero.viewMenu') }}</AppLink>
         </div>
@@ -140,7 +140,7 @@ const stats = computed(() => [
         <h2>{{ t('home.story.title') }}</h2>
         <p>{{ t('home.story.blurb') }}</p>
         <AppLink class="btn primary" to="/about">
-          {{ t('home.story.cta') }} <ArrowRight :size="17"/>
+          {{ t('home.story.cta') }} <ArrowRight class="dir-icon" :size="17"/>
         </AppLink>
       </div>
     </div>

@@ -27,7 +27,7 @@ function toProduct(product: ApiProduct): Product {
     price: kwd(product.priceFils),
     category: product.category.slug,
     image: product.imageUrl || placeholderImage,
-    tags: product.tags,
+    tags: isRtl.value && product.tagsAr.length ? product.tagsAr : product.tags,
     best: product.bestSeller,
     seasonal: product.seasonal,
     gift: product.giftable,

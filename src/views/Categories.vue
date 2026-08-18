@@ -36,7 +36,7 @@ onMounted(() => catalog.load());
             <p>{{ category.description }}</p>
             <b>
               {{ t('common.availableProducts', {count: category.productCount}) }}
-              <ArrowRight :size="17"/>
+              <ArrowRight class="dir-icon" :size="17"/>
             </b>
           </div>
         </AppLink>

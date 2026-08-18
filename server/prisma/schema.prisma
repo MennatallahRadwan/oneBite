@@ -84,6 +84,7 @@ model Product {
   active Boolean @default(true)
   imageUrl String?
   tags String[] @default([])
+  tagsAr String[] @default([])
   servingsEn String?
   servingsAr String?
   allergens String[] @default([])
