@@ -50,6 +50,18 @@ Seed rules worth keeping:
 - A product's base `capacityPoints` and `leadDays` follow its **smallest** variant.
 - Variants and add-ons use deterministic `seed-<slug>-<option>` ids, and the seed deletes options it no longer defines, so re-running it never leaves stale choices selectable.
 
+## Bilingual English/Arabic
+
+- Arabic is served from a `/ar` path prefix; English from the root. Routes are declared once in `src/router/index.ts` and mounted twice.
+- **Every internal link must use `AppLink`, not `RouterLink`.** It prefixes paths from the active locale, which is what keeps a visitor browsing in Arabic inside Arabic. Programmatic navigation uses `localePath()`.
+- Locale lives in `src/i18n/index.ts`, outside Pinia, because the router guard reads it before any component exists. It is derived from the path, applied to `<html lang/dir>` before mount, and remembered in localStorage.
+- `src/i18n/en.ts` is the source of truth for the key set; `ar.ts` is typed against it, so a missing key fails the build.
+- Catalog content is translated in `src/stores/catalog.ts` getters from the En/Ar column pairs. Products and categories expose `name` (active language) and `nameAlt` (the other), which drives the two-line treatment in both directions.
+- Money, counts and dates go through `Intl` with an `ar-KW` locale, so Arabic pages use Arabic-Indic digits and the Arabic currency symbol.
+- Server error messages are English. The API client throws `ApiError` carrying the error code and `src/i18n/errors.ts` translates from that code.
+- RTL is mostly handled by `dir=rtl` on flex/grid. `src/style.css` covers the rest: Arabic typeface stack, directional rows, `.dir-icon` for arrows that mean forward/back, and `dir="auto"` on mixed-language lines.
+- The owner dashboard (`/admin`) is deliberately English only — internal tool, not customer-facing.
+
 ## PostgreSQL and Prisma
 
 - Docker database service is configured in `docker-compose.yml` (untracked; it is in `.gitignore`).
@@ -84,7 +96,6 @@ npm.cmd run server:test
 
 ## Known work remaining
 
-- Full English/Arabic localized routes and complete RTL behavior. The backend already stores both languages; the storefront renders only English and has no locale toggle.
 - Customer accounts, addresses, wishlist sync, cancellations, and COD workflows. `Order.userId` is always null and the wishlist is localStorage-only.
 - Admin CRUD beyond order confirm/reject: catalog, production capacity, delivery areas and slots, promotions, content.
 - The checkout quote store and the MFA challenge store are in-process `Map`s in `app.ts` and `owner-auth.ts`. They do not survive a restart and break with more than one instance; both belong in the database.
@@ -92,5 +103,7 @@ npm.cmd run server:test
 - The API's error handler swallows the error without logging it.
 - Gift details collected at checkout are still not sent to the bakery, and the UI says so.
 - CORS does not set `credentials: true` and the API client does not send `credentials: 'include'`, so owner auth only works same-origin through the Vite dev proxy.
-- SEO metadata/sitemap, object storage, CI, and deployment.
+- SEO metadata/sitemap (the `/ar` routes exist to be indexed, but nothing emits `hreflang`, per-page titles or a sitemap yet), object storage, CI, and deployment.
+- Several seeded products point at Unsplash photo IDs that resolve to unrelated images (a clock, a pile of sale tags). The image URLs are seed data, not code.
+- Tests share the development database with no isolation and run in parallel. `server/vitest.config.ts` raises the timeout to accommodate that; a dedicated test database would be better.
 - `dist/` and `node_modules/` are tracked in Git and always show as modified. Stage commits with explicit paths; never `git add -A`.
