@@ -2,6 +2,7 @@
 import {ref, computed, onMounted} from 'vue';
 import {Search} from 'lucide-vue-next';
 import {useCatalogStore} from '../stores/catalog';
+import {t} from '../i18n';
 import ProductCard from '../components/ProductCard.vue';
 import PageHero from '../components/PageHero.vue';
 
@@ -21,24 +22,24 @@ const result = computed(() => {
 
 <template>
   <PageHero
-    eyebrow="Find Your Favorite"
-    title="Search One Bite"
-    subtitle="Search cakes, pastries, gifts and seasonal creations."
+    :eyebrow="t('search.eyebrow')"
+    :title="t('search.title')"
+    :subtitle="t('search.subtitle')"
   />
 
   <section class="section">
     <div class="container">
       <div class="big-search">
         <Search/>
-        <input v-model="query" autofocus placeholder="What are you craving?">
+        <input v-model="query" autofocus :placeholder="t('search.placeholder')">
       </div>
 
-      <p v-if="catalog.loading" class="form-note">Loading the menu…</p>
+      <p v-if="catalog.loading" class="form-note">{{ t('common.loading') }}</p>
       <p v-else-if="catalog.error" class="form-note" role="alert">{{ catalog.error }}</p>
 
       <template v-else>
         <h2 class="search-title">
-          {{ query ? `${result.length} results for “${query}”` : 'Popular right now' }}
+          {{ query ? t('search.results', {count: result.length, query}) : t('search.popular') }}
         </h2>
         <div class="product-grid">
           <ProductCard v-for="product in result" :key="product.id" :product="product"/>

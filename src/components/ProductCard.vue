@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {Heart, Plus} from 'lucide-vue-next';
 import {money, type Product} from '../data';
+import {t} from '../i18n';
 import {useShopStore} from '../stores/shop';
 import AppLink from './AppLink.vue';
 
@@ -30,9 +31,9 @@ const store = useShopStore();
       </AppLink>
       <p class="name-alt" dir="auto">{{ product.nameAlt }}</p>
       <div class="product-bottom">
-        <strong>From {{ money(product.price) }}</strong>
+        <strong>{{ t('common.from', {price: money(product.price)}) }}</strong>
         <AppLink class="add" :to="`/product/${product.id}`">
-          <Plus :size="17"/> Choose
+          <Plus :size="17"/> {{ t('product.choose') }}
         </AppLink>
       </div>
     </div>

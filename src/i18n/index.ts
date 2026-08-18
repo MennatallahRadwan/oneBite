@@ -68,12 +68,27 @@ export function storedLocale(): Locale | null {
   }
 }
 
-export function translate(key: MessageKey, locale: Locale): string {
-  return dictionaries[locale][key] ?? en[key] ?? key;
+export type MessageVars = Record<string, string | number>;
+
+/**
+ * Looks a message up and fills `{name}` placeholders. Numbers are formatted for
+ * the locale, so counts inside Arabic copy use Arabic-Indic digits.
+ */
+export function translate(key: MessageKey, target: Locale, vars?: MessageVars): string {
+  const template = dictionaries[target][key] ?? en[key] ?? key;
+  if (!vars) return template;
+
+  return template.replace(/\{(\w+)\}/g, (match, name: string) => {
+    const value = vars[name];
+    if (value === undefined) return match;
+    return typeof value === 'number'
+      ? new Intl.NumberFormat(target === 'ar' ? 'ar-KW' : 'en-KW').format(value)
+      : value;
+  });
 }
 
-export function t(key: MessageKey): string {
-  return translate(key, locale.value);
+export function t(key: MessageKey, vars?: MessageVars): string {
+  return translate(key, locale.value, vars);
 }
 
 /** Picks the field for the active locale from an API record's En/Ar pair. */

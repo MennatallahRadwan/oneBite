@@ -2,9 +2,10 @@
 import {computed, onMounted, ref, watch} from 'vue';
 import {useRoute} from 'vue-router';
 import {Heart, Minus, Plus, ShoppingBag, Truck, ShieldCheck, Clock} from 'lucide-vue-next';
-import {money} from '../data';
+import {money, num} from '../data';
 import {useCatalogStore} from '../stores/catalog';
 import {useShopStore} from '../stores/shop';
+import {t} from '../i18n';
 import ProductCard from '../components/ProductCard.vue';
 import AppLink from '../components/AppLink.vue';
 
@@ -81,12 +82,12 @@ function add() {
 <template>
   <section v-if="catalog.loading || catalog.error || !product" class="section">
     <div class="container empty">
-      <p v-if="catalog.loading" class="form-note">Loading this product…</p>
+      <p v-if="catalog.loading" class="form-note">{{ t('common.loadingProduct') }}</p>
       <p v-else-if="catalog.error" class="form-note" role="alert">{{ catalog.error }}</p>
       <template v-else>
-        <h2>Product not found</h2>
-        <p>This product may have been removed from the menu.</p>
-        <AppLink class="btn primary" to="/shop">Browse the menu</AppLink>
+        <h2>{{ t('product.notFound') }}</h2>
+        <p>{{ t('product.notFoundBlurb') }}</p>
+        <AppLink class="btn primary" to="/shop">{{ t('product.browse') }}</AppLink>
       </template>
     </div>
   </section>
@@ -101,20 +102,20 @@ function add() {
       <div class="detail-copy">
         <h1>{{ product.name }}</h1>
         <p class="name-alt large" dir="auto">{{ product.nameAlt }}</p>
-        <strong class="detail-price">From {{ money(product.price) }}</strong>
+        <strong class="detail-price">{{ t('common.from', {price: money(product.price)}) }}</strong>
         <p class="description">{{ product.description }}</p>
 
         <div class="info-pills">
-          <span v-if="product.servings">Serves: {{ product.servings }}</span>
-          <span>Made to order</span>
+          <span v-if="product.servings">{{ t('product.serves', {value: product.servings}) }}</span>
+          <span>{{ t('product.madeToOrder') }}</span>
         </div>
 
         <div v-if="product.allergens" class="allergens">
-          <b>Contains:</b> {{ product.allergens.join(', ') }}
+          <b>{{ t('product.contains') }}</b> {{ product.allergens.join(', ') }}
         </div>
 
         <div v-if="product.variants" class="config">
-          <b>Choose a size</b>
+          <b>{{ t('product.chooseSize') }}</b>
           <div class="choice-grid">
             <button
               v-for="option in product.variants"
@@ -128,7 +129,7 @@ function add() {
         </div>
 
         <div v-if="product.addons?.length" class="config">
-          <b>Packaging</b>
+          <b>{{ t('product.packaging') }}</b>
           <label v-for="addon in product.addons" :key="addon.id" class="option-check">
             <input v-model="selectedAddons" type="checkbox" :value="addon.id">
             {{ addon.name }} <small>+ {{ money(addon.price) }}</small>
@@ -136,25 +137,25 @@ function add() {
         </div>
 
         <label v-if="product.cakeText" class="cake-text">
-          <b>Short cake text (optional)</b>
+          <b>{{ t('product.cakeText') }}</b>
           <small>
-            + {{ money(product.cakeText.price) }} · up to {{ product.cakeText.maxLength }} characters
+            {{ t('product.cakeTextHint', {price: money(product.cakeText.price), max: product.cakeText.maxLength}) }}
           </small>
           <input
             v-model="cakeText"
             :maxlength="product.cakeText.maxLength"
-            placeholder="e.g. Happy Birthday Noor"
+            :placeholder="t('product.cakeTextPlaceholder')"
           >
         </label>
 
         <div class="purchase">
           <div class="qty">
             <button @click="qty = Math.max(1, qty - 1)"><Minus :size="17"/></button>
-            <b>{{ qty }}</b>
+            <b>{{ num(qty) }}</b>
             <button @click="qty++"><Plus :size="17"/></button>
           </div>
           <button class="btn primary grow" @click="add">
-            <ShoppingBag :size="18"/> Add to Cart · {{ money(unitPrice * qty) }}
+            <ShoppingBag :size="18"/> {{ t('product.addToCart', {price: money(unitPrice * qty)}) }}
           </button>
           <button
             class="icon-btn"
@@ -166,13 +167,13 @@ function add() {
         </div>
 
         <p v-if="added" class="form-note" role="status">
-          Added to your cart. <AppLink to="/cart">View cart</AppLink>
+          {{ t('product.added') }} <AppLink to="/cart">{{ t('product.viewCart') }}</AppLink>
         </p>
 
         <div class="detail-trust">
-          <span><Truck/> Delivery fee and earliest window are calculated after area selection</span>
-          <span><Clock/> Availability is confirmed by the bakery after ordering</span>
-          <span><ShieldCheck/> Cash on delivery only</span>
+          <span><Truck/> {{ t('product.trust.fee') }}</span>
+          <span><Clock/> {{ t('product.trust.confirm') }}</span>
+          <span><ShieldCheck/> {{ t('product.trust.cod') }}</span>
         </div>
       </div>
     </div>
@@ -182,8 +183,8 @@ function add() {
     <div class="container">
       <div class="section-head">
         <div>
-          <span class="eyebrow">You May Also Like</span>
-          <h2>More to Love</h2>
+          <span class="eyebrow">{{ t('product.related.eyebrow') }}</span>
+          <h2>{{ t('product.related.title') }}</h2>
         </div>
       </div>
       <div class="product-grid">

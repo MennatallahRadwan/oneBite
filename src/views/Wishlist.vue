@@ -3,6 +3,7 @@ import {computed, onMounted} from 'vue';
 import {Heart} from 'lucide-vue-next';
 import {useCatalogStore} from '../stores/catalog';
 import {useShopStore} from '../stores/shop';
+import {t} from '../i18n';
 import ProductCard from '../components/ProductCard.vue';
 import PageHero from '../components/PageHero.vue';
 import AppLink from '../components/AppLink.vue';
@@ -19,21 +20,21 @@ const list = computed(() =>
 
 <template>
   <PageHero
-    eyebrow="Saved for Later"
-    title="Your Wishlist"
-    subtitle="All the sweet things you have your eye on."
+    :eyebrow="t('wishlist.eyebrow')"
+    :title="t('wishlist.title')"
+    :subtitle="t('wishlist.subtitle')"
   />
 
   <section class="section">
     <div class="container">
-      <p v-if="catalog.loading" class="form-note">Loading your saved items…</p>
+      <p v-if="catalog.loading" class="form-note">{{ t('common.loadingSaved') }}</p>
       <p v-else-if="catalog.error" class="form-note" role="alert">{{ catalog.error }}</p>
 
       <div v-else-if="!list.length" class="empty">
         <Heart :size="48"/>
-        <h2>No favorites yet</h2>
-        <p>Tap the heart on any product to save it here.</p>
-        <AppLink class="btn primary" to="/shop">Explore the Menu</AppLink>
+        <h2>{{ t('wishlist.empty.title') }}</h2>
+        <p>{{ t('wishlist.empty.blurb') }}</p>
+        <AppLink class="btn primary" to="/shop">{{ t('wishlist.empty.cta') }}</AppLink>
       </div>
       <div v-else class="product-grid">
         <ProductCard v-for="product in list" :key="product.id" :product="product"/>

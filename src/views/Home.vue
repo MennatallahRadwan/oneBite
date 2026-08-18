@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import {computed, onMounted} from 'vue';
 import {ArrowRight, Clock, ShieldCheck, Truck} from 'lucide-vue-next';
-import {img} from '../data';
+import {img, money} from '../data';
 import {useCatalogStore} from '../stores/catalog';
+import {t} from '../i18n';
 import ProductCard from '../components/ProductCard.vue';
 import AppLink from '../components/AppLink.vue';
 
@@ -12,34 +13,43 @@ onMounted(() => catalog.load());
 const categories = computed(() => catalog.categories);
 const featured = computed(() => catalog.products.filter(product => product.best).slice(0, 4));
 const seasonal = computed(() => catalog.products.filter(product => product.seasonal).slice(0, 3));
+
+// The hero card used to name a hardcoded cake and price. It now follows the
+// catalog, so it cannot drift from what is actually on sale.
+const showcase = computed(() => featured.value[0] ?? catalog.products[0]);
+
+const stats = computed(() => [
+  {icon: '🎂', label: t('home.stat.madeToOrder'), sub: t('home.stat.madeToOrderSub')},
+  {icon: '🗓️', label: t('home.stat.slots'), sub: t('home.stat.slotsSub')},
+  {icon: '🇰🇼', label: t('home.stat.delivery'), sub: t('home.stat.deliverySub')}
+]);
 </script>
 
 <template>
   <section class="hero">
     <div class="container hero-grid">
       <div class="hero-copy">
-        <span class="hero-pill">Made to order · Kuwait delivery</span>
-        <h1>Baked with Love,<br><i>Delivered</i> to Your Door</h1>
-        <p>
-          Premium cakes, pastries and sweets crafted for your occasions—choose from our available menu
-          and reserve a delivery request.
-        </p>
+        <span class="hero-pill">{{ t('home.hero.pill') }}</span>
+        <h1>{{ t('home.hero.line1') }}<br><i>{{ t('home.hero.line2') }}</i></h1>
+        <p>{{ t('home.hero.blurb') }}</p>
         <div class="button-row">
-          <AppLink class="btn gold" to="/shop">Order Now <ArrowRight :size="18"/></AppLink>
-          <AppLink class="btn outline-light" to="/categories">View Menu</AppLink>
+          <AppLink class="btn gold" to="/shop">
+            {{ t('home.hero.order') }} <ArrowRight :size="18"/>
+          </AppLink>
+          <AppLink class="btn outline-light" to="/categories">{{ t('home.hero.viewMenu') }}</AppLink>
         </div>
         <div class="hero-stats">
-          <span>🎂 <b>Made to order</b><small>Predefined sizes &amp; flavours</small></span>
-          <span>🗓️ <b>Flexible slots</b><small>Subject to bakery confirmation</small></span>
-          <span>🇰🇼 <b>Kuwait delivery</b><small>Area-based delivery fees</small></span>
+          <span v-for="stat in stats" :key="stat.label">
+            {{ stat.icon }} <b>{{ stat.label }}</b><small>{{ stat.sub }}</small>
+          </span>
         </div>
       </div>
 
       <div class="hero-card">
-        <img :src="img('1578985545062-69928b1d9587')">
-        <div class="floating-price">
-          <small>Chocolate Truffle Cake</small>
-          <b>KWD 8.500</b>
+        <img :src="showcase?.image || img('1578985545062-69928b1d9587')">
+        <div v-if="showcase" class="floating-price">
+          <small>{{ showcase.name }}</small>
+          <b>{{ money(showcase.price) }}</b>
         </div>
       </div>
     </div>
@@ -47,9 +57,9 @@ const seasonal = computed(() => catalog.products.filter(product => product.seaso
 
   <section class="trust">
     <div class="container trust-row">
-      <span><Truck/>Area-based delivery fees</span>
-      <span><Clock/>Earliest slot calculated for your cart</span>
-      <span><ShieldCheck/>Cash on delivery only</span>
+      <span><Truck/>{{ t('home.trust.fees') }}</span>
+      <span><Clock/>{{ t('home.trust.slot') }}</span>
+      <span><ShieldCheck/>{{ t('home.trust.cod') }}</span>
     </div>
   </section>
 
@@ -57,12 +67,12 @@ const seasonal = computed(() => catalog.products.filter(product => product.seaso
     <div class="container">
       <div class="section-head">
         <div>
-          <span class="eyebrow">Browse</span>
-          <h2>Our Categories</h2>
+          <span class="eyebrow">{{ t('home.categories.eyebrow') }}</span>
+          <h2>{{ t('home.categories.title') }}</h2>
         </div>
-        <AppLink to="/categories">All categories →</AppLink>
+        <AppLink to="/categories">{{ t('home.categories.all') }}</AppLink>
       </div>
-      <p v-if="catalog.loading" class="form-note">Loading the menu…</p>
+      <p v-if="catalog.loading" class="form-note">{{ t('common.loading') }}</p>
       <p v-else-if="catalog.error" class="form-note" role="alert">{{ catalog.error }}</p>
       <div v-else class="category-strip">
         <AppLink
@@ -83,13 +93,13 @@ const seasonal = computed(() => catalog.products.filter(product => product.seaso
     <div class="container">
       <div class="section-head">
         <div>
-          <span class="eyebrow">Popular choices</span>
-          <h2>Best Sellers</h2>
-          <p>A curated selection from the current menu.</p>
+          <span class="eyebrow">{{ t('home.best.eyebrow') }}</span>
+          <h2>{{ t('home.best.title') }}</h2>
+          <p>{{ t('home.best.blurb') }}</p>
         </div>
-        <AppLink class="btn secondary" to="/best-sellers">View all</AppLink>
+        <AppLink class="btn secondary" to="/best-sellers">{{ t('common.viewAll') }}</AppLink>
       </div>
-      <p v-if="catalog.loading" class="form-note">Loading best sellers…</p>
+      <p v-if="catalog.loading" class="form-note">{{ t('home.best.loading') }}</p>
       <div v-else class="product-grid">
         <ProductCard v-for="product in featured" :key="product.id" :product="product"/>
       </div>
@@ -100,8 +110,8 @@ const seasonal = computed(() => catalog.products.filter(product => product.seaso
     <div class="container">
       <div class="section-head">
         <div>
-          <span class="eyebrow">Limited Edition</span>
-          <h2>Seasonal Collection</h2>
+          <span class="eyebrow">{{ t('home.seasonal.eyebrow') }}</span>
+          <h2>{{ t('home.seasonal.title') }}</h2>
         </div>
       </div>
       <div class="seasonal-grid">
@@ -113,9 +123,9 @@ const seasonal = computed(() => catalog.products.filter(product => product.seaso
         >
           <img :src="product.image">
           <div>
-            <span>Limited</span>
+            <span>{{ t('home.seasonal.badge') }}</span>
             <h3>{{ product.name }}</h3>
-            <b>KWD {{ product.price.toFixed(3) }}</b>
+            <b>{{ money(product.price) }}</b>
           </div>
         </AppLink>
       </div>
@@ -126,13 +136,12 @@ const seasonal = computed(() => catalog.products.filter(product => product.seaso
     <div class="container story-grid">
       <img :src="img('1556909114-f6e7ad7d3136')">
       <div>
-        <span class="eyebrow">Our Story</span>
-        <h2>Made from scratch. Made to matter.</h2>
-        <p>
-          We bake in small batches and finish each order by hand. Product availability and delivery
-          windows are confirmed by the bakery so every order receives the care it needs.
-        </p>
-        <AppLink class="btn primary" to="/about">Meet One Bite <ArrowRight :size="17"/></AppLink>
+        <span class="eyebrow">{{ t('home.story.eyebrow') }}</span>
+        <h2>{{ t('home.story.title') }}</h2>
+        <p>{{ t('home.story.blurb') }}</p>
+        <AppLink class="btn primary" to="/about">
+          {{ t('home.story.cta') }} <ArrowRight :size="17"/>
+        </AppLink>
       </div>
     </div>
   </section>
