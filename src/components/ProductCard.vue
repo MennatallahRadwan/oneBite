@@ -2,6 +2,7 @@
 import {Heart, Plus} from 'lucide-vue-next';
 import {money, type Product} from '../data';
 import {useShopStore} from '../stores/shop';
+import AppLink from './AppLink.vue';
 
 defineProps<{product: Product}>();
 const store = useShopStore();
@@ -10,9 +11,9 @@ const store = useShopStore();
 <template>
   <article class="product-card">
     <div class="product-image">
-      <RouterLink :to="`/product/${product.id}`">
+      <AppLink :to="`/product/${product.id}`">
         <img :src="product.image" :alt="product.name">
-      </RouterLink>
+      </AppLink>
       <span v-if="product.tags[0]" class="tag">{{ product.tags[0] }}</span>
       <button
         class="wish"
@@ -24,15 +25,15 @@ const store = useShopStore();
     </div>
 
     <div class="product-info">
-      <RouterLink :to="`/product/${product.id}`">
+      <AppLink :to="`/product/${product.id}`">
         <h3>{{ product.name }}</h3>
-      </RouterLink>
+      </AppLink>
       <p class="arabic">{{ product.nameAr }}</p>
       <div class="product-bottom">
         <strong>From {{ money(product.price) }}</strong>
-        <RouterLink class="add" :to="`/product/${product.id}`">
+        <AppLink class="add" :to="`/product/${product.id}`">
           <Plus :size="17"/> Choose
-        </RouterLink>
+        </AppLink>
       </div>
     </div>
   </article>

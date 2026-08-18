@@ -3,6 +3,7 @@ import {Minus, Plus, Trash2, ShoppingBag, ArrowRight} from 'lucide-vue-next';
 import {money} from '../data';
 import {useShopStore} from '../stores/shop';
 import PageHero from '../components/PageHero.vue';
+import AppLink from '../components/AppLink.vue';
 
 const store = useShopStore();
 </script>
@@ -20,7 +21,7 @@ const store = useShopStore();
         <ShoppingBag :size="48"/>
         <h2>Your cart is empty</h2>
         <p>There is always room for one more sweet moment.</p>
-        <RouterLink class="btn primary" to="/shop">Start Shopping</RouterLink>
+        <AppLink class="btn primary" to="/shop">Start Shopping</AppLink>
       </div>
 
       <div v-else class="cart-layout">
@@ -28,9 +29,9 @@ const store = useShopStore();
           <article v-for="item in store.cart" :key="item.lineId" class="cart-item">
             <img :src="item.image">
             <div class="cart-info">
-              <RouterLink :to="`/product/${item.slug}`">
+              <AppLink :to="`/product/${item.slug}`">
                 <h3>{{ item.name }}</h3>
-              </RouterLink>
+              </AppLink>
               <p>{{ item.nameAr }}</p>
               <ul v-if="item.variantName || item.addonNames.length || item.cakeText" class="line-options">
                 <li v-if="item.variantName">{{ item.variantName }}</li>
@@ -54,9 +55,9 @@ const store = useShopStore();
           <div><span>Subtotal</span><b>{{ money(store.cartTotal) }}</b></div>
           <div><span>Delivery</span><b>Calculated at checkout</b></div>
           <div class="total"><span>Total</span><b>{{ money(store.cartTotal) }}</b></div>
-          <RouterLink class="btn primary full" to="/checkout">
+          <AppLink class="btn primary full" to="/checkout">
             Proceed to Checkout <ArrowRight :size="17"/>
-          </RouterLink>
+          </AppLink>
           <p>Cash on delivery · Every order is confirmed by the bakery</p>
         </aside>
       </div>

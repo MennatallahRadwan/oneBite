@@ -3,6 +3,7 @@ import {onMounted} from 'vue';
 import {ArrowRight} from 'lucide-vue-next';
 import {useCatalogStore} from '../stores/catalog';
 import PageHero from '../components/PageHero.vue';
+import AppLink from '../components/AppLink.vue';
 
 const catalog = useCatalogStore();
 onMounted(() => catalog.load());
@@ -21,7 +22,7 @@ onMounted(() => catalog.load());
       <p v-else-if="catalog.error" class="form-note" role="alert">{{ catalog.error }}</p>
 
       <div v-else class="category-grid">
-        <RouterLink
+        <AppLink
           v-for="category in catalog.categories"
           :key="category.id"
           :to="`/shop?category=${category.id}`"
@@ -34,7 +35,7 @@ onMounted(() => catalog.load());
             <p>{{ category.description }}</p>
             <b>{{ category.productCount }} available products <ArrowRight :size="17"/></b>
           </div>
-        </RouterLink>
+        </AppLink>
       </div>
     </div>
   </section>

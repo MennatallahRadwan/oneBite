@@ -4,6 +4,7 @@ import {useRoute} from 'vue-router';
 import {Check, ChefHat, Clock3, Home, Truck} from 'lucide-vue-next';
 import PageHero from '../components/PageHero.vue';
 import {api, type TrackingOrder} from '../api/client';
+import AppLink from '../components/AppLink.vue';
 
 const route = useRoute();
 const order = ref<TrackingOrder | null>(null);
@@ -102,7 +103,7 @@ onMounted(async () => {
           <div>
             <h2>Need Help?</h2>
             <p>Our team is ready to help with your order.</p>
-            <RouterLink to="/contact">Contact support →</RouterLink>
+            <AppLink to="/contact">Contact support →</AppLink>
           </div>
         </div>
       </template>

@@ -6,6 +6,7 @@ import {money} from '../data';
 import {useCatalogStore} from '../stores/catalog';
 import {useShopStore} from '../stores/shop';
 import ProductCard from '../components/ProductCard.vue';
+import AppLink from '../components/AppLink.vue';
 
 const route = useRoute();
 const store = useShopStore();
@@ -85,7 +86,7 @@ function add() {
       <template v-else>
         <h2>Product not found</h2>
         <p>This product may have been removed from the menu.</p>
-        <RouterLink class="btn primary" to="/shop">Browse the menu</RouterLink>
+        <AppLink class="btn primary" to="/shop">Browse the menu</AppLink>
       </template>
     </div>
   </section>
@@ -165,7 +166,7 @@ function add() {
         </div>
 
         <p v-if="added" class="form-note" role="status">
-          Added to your cart. <RouterLink to="/cart">View cart</RouterLink>
+          Added to your cart. <AppLink to="/cart">View cart</AppLink>
         </p>
 
         <div class="detail-trust">

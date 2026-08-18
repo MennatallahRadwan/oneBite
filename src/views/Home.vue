@@ -4,6 +4,7 @@ import {ArrowRight, Clock, ShieldCheck, Truck} from 'lucide-vue-next';
 import {img} from '../data';
 import {useCatalogStore} from '../stores/catalog';
 import ProductCard from '../components/ProductCard.vue';
+import AppLink from '../components/AppLink.vue';
 
 const catalog = useCatalogStore();
 onMounted(() => catalog.load());
@@ -24,8 +25,8 @@ const seasonal = computed(() => catalog.products.filter(product => product.seaso
           and reserve a delivery request.
         </p>
         <div class="button-row">
-          <RouterLink class="btn gold" to="/shop">Order Now <ArrowRight :size="18"/></RouterLink>
-          <RouterLink class="btn outline-light" to="/categories">View Menu</RouterLink>
+          <AppLink class="btn gold" to="/shop">Order Now <ArrowRight :size="18"/></AppLink>
+          <AppLink class="btn outline-light" to="/categories">View Menu</AppLink>
         </div>
         <div class="hero-stats">
           <span>🎂 <b>Made to order</b><small>Predefined sizes &amp; flavours</small></span>
@@ -59,12 +60,12 @@ const seasonal = computed(() => catalog.products.filter(product => product.seaso
           <span class="eyebrow">Browse</span>
           <h2>Our Categories</h2>
         </div>
-        <RouterLink to="/categories">All categories →</RouterLink>
+        <AppLink to="/categories">All categories →</AppLink>
       </div>
       <p v-if="catalog.loading" class="form-note">Loading the menu…</p>
       <p v-else-if="catalog.error" class="form-note" role="alert">{{ catalog.error }}</p>
       <div v-else class="category-strip">
-        <RouterLink
+        <AppLink
           v-for="category in categories.slice(0, 6)"
           :key="category.id"
           :to="`/shop?category=${category.id}`"
@@ -73,7 +74,7 @@ const seasonal = computed(() => catalog.products.filter(product => product.seaso
           <img :src="category.image">
           <b>{{ category.name }}</b>
           <small>{{ category.nameAr }}</small>
-        </RouterLink>
+        </AppLink>
       </div>
     </div>
   </section>
@@ -86,7 +87,7 @@ const seasonal = computed(() => catalog.products.filter(product => product.seaso
           <h2>Best Sellers</h2>
           <p>A curated selection from the current menu.</p>
         </div>
-        <RouterLink class="btn secondary" to="/best-sellers">View all</RouterLink>
+        <AppLink class="btn secondary" to="/best-sellers">View all</AppLink>
       </div>
       <p v-if="catalog.loading" class="form-note">Loading best sellers…</p>
       <div v-else class="product-grid">
@@ -104,7 +105,7 @@ const seasonal = computed(() => catalog.products.filter(product => product.seaso
         </div>
       </div>
       <div class="seasonal-grid">
-        <RouterLink
+        <AppLink
           v-for="(product, index) in seasonal"
           :key="product.id"
           :to="`/product/${product.id}`"
@@ -116,7 +117,7 @@ const seasonal = computed(() => catalog.products.filter(product => product.seaso
             <h3>{{ product.name }}</h3>
             <b>KWD {{ product.price.toFixed(3) }}</b>
           </div>
-        </RouterLink>
+        </AppLink>
       </div>
     </div>
   </section>
@@ -131,7 +132,7 @@ const seasonal = computed(() => catalog.products.filter(product => product.seaso
           We bake in small batches and finish each order by hand. Product availability and delivery
           windows are confirmed by the bakery so every order receives the care it needs.
         </p>
-        <RouterLink class="btn primary" to="/about">Meet One Bite <ArrowRight :size="17"/></RouterLink>
+        <AppLink class="btn primary" to="/about">Meet One Bite <ArrowRight :size="17"/></AppLink>
       </div>
     </div>
   </section>

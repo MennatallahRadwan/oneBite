@@ -5,6 +5,8 @@ import {ArrowLeft, ArrowRight, Check, Clock, Gift, MapPin, Wallet} from 'lucide-
 import {money} from '../data';
 import {api, type DeliveryArea, type Quote, type Slot} from '../api/client';
 import {useShopStore} from '../stores/shop';
+import {localePath} from '../i18n';
+import AppLink from '../components/AppLink.vue';
 
 const router = useRouter();
 const store = useShopStore();
@@ -180,12 +182,12 @@ async function next() {
           Your request <b>{{ created.orderNumber }}</b> is holding its selected capacity while the
           bakery reviews it.
         </p>
-        <button class="btn primary" @click="router.push(`/order/${created!.trackingToken}`)">
+        <button class="btn primary" @click="router.push(localePath(`/order/${created!.trackingToken}`))">
           Track your order
         </button>
         <p class="form-note">
           Save this link. If you lose it you can find your order again from
-          <RouterLink to="/track">order tracking</RouterLink> using your order number and phone
+          <AppLink to="/track">order tracking</AppLink> using your order number and phone
           number.
         </p>
       </div>

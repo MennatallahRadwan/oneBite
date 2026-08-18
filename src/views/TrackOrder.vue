@@ -4,6 +4,7 @@ import {useRouter} from 'vue-router';
 import {PackageSearch} from 'lucide-vue-next';
 import PageHero from '../components/PageHero.vue';
 import {api} from '../api/client';
+import {localePath} from '../i18n';
 
 const router = useRouter();
 const orderNumber = ref('');
@@ -25,7 +26,7 @@ async function lookup() {
   error.value = '';
   try {
     const {trackingToken} = await api.trackingLookup(orderNumber.value.trim(), phone.value.trim());
-    router.replace(`/order/${trackingToken}`);
+    router.replace(localePath(`/order/${trackingToken}`));
   } catch {
     error.value = notFound;
   } finally {
