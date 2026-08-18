@@ -9,6 +9,7 @@ import {prisma} from './db.js';
 import {calculateAvailability} from './availability-service.js';
 import {CartError, cartSubtotalFils, type CartLine} from './cart-service.js';
 import {createReservedOrder, OrderConflictError} from './order-service.js';
+import {claimQuote, createQuote} from './quote-service.js';
 import {beginOwnerLogin, completeOwnerLogin, logoutOwner, ownerFromRequest} from './owner-auth.js';
 import {OrderLifecycleError, updateOrderLifecycle} from './order-lifecycle-service.js';
 
@@ -62,7 +63,6 @@ const trackingLookup = z.object({
   phone: z.string().min(6)
 });
 
-const quotes = new Map<string, {expiresAt: number; items: CartLine[]; area: string}>();
 const publicProduct = {published: true, active: true, archivedAt: null};
 
 const optionFields = {id: true, nameEn: true, nameAr: true, priceFils: true, capacityPoints: true};
@@ -117,7 +117,10 @@ export function createApp() {
 
   app.use(pinoHttp());
   app.use(helmet());
-  app.use(cors({origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173'}));
+  // credentials:true is what lets the owner session cookie travel to an API on
+  // another origin; without it owner auth only works through the dev proxy.
+  // It requires a concrete origin — the wildcard is rejected by browsers here.
+  app.use(cors({origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173', credentials: true}));
   app.use(express.json({limit: '100kb'}));
   app.use((_, res, next) => {
     res.setHeader('X-Request-Id', randomUUID());
@@ -295,13 +298,11 @@ export function createApp() {
 
       const subtotal = cartSubtotalFils(result.lines);
       const area = await prisma.deliveryArea.findFirstOrThrow({where: {nameEn: parsed.data.area, active: true}});
-      const quoteId = randomUUID();
-      const expiresAt = Date.now() + 900000;
-      quotes.set(quoteId, {expiresAt, items: parsed.data.items, area: parsed.data.area});
+      const quote = await createQuote(parsed.data.items, parsed.data.area);
 
       res.json({
-        quoteId,
-        expiresAt: new Date(expiresAt).toISOString(),
+        quoteId: quote.id,
+        expiresAt: quote.expiresAt.toISOString(),
         items: result.lines.map(line => ({
           slug: line.slug,
           quantity: line.quantity,
@@ -332,19 +333,19 @@ export function createApp() {
       const parsed = order.safeParse(req.body);
       if (!parsed.success) return validationError(res, 'Invalid order');
 
-      const quote = quotes.get(parsed.data.quoteId);
-      if (!quote || quote.expiresAt < Date.now()) {
+      // Claimed before the order is built, so one quote cannot yield two orders.
+      const quote = await claimQuote(parsed.data.quoteId);
+      if (!quote) {
         return res.status(409).json({error: {code: 'STALE_QUOTE', message: 'Your quote has expired. Please refresh availability.'}});
       }
 
       const created = await createReservedOrder({
         items: quote.items,
-        area: quote.area,
+        area: quote.areaName,
         selectedSlot: parsed.data.selectedSlot,
         customer: parsed.data.customer,
         address: parsed.data.address
       });
-      quotes.delete(parsed.data.quoteId);
 
       res.status(201).json({
         orderNumber: created.publicNumber,
@@ -402,7 +403,10 @@ export function createApp() {
     }
   });
 
-  app.use((_error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  app.use((error: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    // Without this the cause of every 500 was discarded, leaving nothing to
+    // debug from. The response stays deliberately opaque to the caller.
+    req.log?.error({err: error}, 'unhandled request error');
     res.status(500).json({error: {code: 'INTERNAL_ERROR', message: 'An unexpected error occurred'}});
   });
 

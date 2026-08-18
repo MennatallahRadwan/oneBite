@@ -26,6 +26,7 @@ afterAll(async () => {
   const user = await prisma.user.findUnique({where: {email}});
   if (!user) return;
   await prisma.session.deleteMany({where: {userId: user.id}});
+  await prisma.mfaChallenge.deleteMany({where: {userId: user.id}});
   await prisma.user.delete({where: {id: user.id}});
 });
 
@@ -48,5 +49,37 @@ describe('owner authentication', () => {
     const orders = await request(app).get('/api/v1/owner/orders').set('Cookie', sessionCookie!);
     expect(orders.status).toBe(200);
     expect(Array.isArray(orders.body.items)).toBe(true);
+  });
+
+  it('carries a half-finished login across a restart', async () => {
+    const login = await request(createApp()).post('/api/v1/owner/auth/login').send({email, password});
+    expect(login.status).toBe(202);
+    const challengeCookie = login.headers['set-cookie']?.[0];
+
+    // A second instance shares no memory with the first, so the challenge can
+    // only be found if it was persisted.
+    const verified = await request(createApp())
+      .post('/api/v1/owner/auth/verify-totp')
+      .set('Cookie', challengeCookie!)
+      .send({code: generateTotp(secret)});
+
+    expect(verified.status, JSON.stringify(verified.body)).toBe(200);
+  });
+
+  it('refuses to reuse a challenge after it has been spent', async () => {
+    const login = await request(app).post('/api/v1/owner/auth/login').send({email, password});
+    const challengeCookie = login.headers['set-cookie']?.[0];
+
+    const first = await request(app)
+      .post('/api/v1/owner/auth/verify-totp')
+      .set('Cookie', challengeCookie!)
+      .send({code: generateTotp(secret)});
+    expect(first.status).toBe(200);
+
+    const replay = await request(app)
+      .post('/api/v1/owner/auth/verify-totp')
+      .set('Cookie', challengeCookie!)
+      .send({code: generateTotp(secret)});
+    expect(replay.status).toBe(401);
   });
 });

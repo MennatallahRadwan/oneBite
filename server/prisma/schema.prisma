@@ -45,6 +45,7 @@ model User {
   createdAt DateTime @default(now())
   orders Order[]
   sessions Session[]
+  mfaChallenges MfaChallenge[]
 }
 model Session {
   id String @id @default(cuid())
@@ -54,6 +55,30 @@ model Session {
   expiresAt DateTime
   createdAt DateTime @default(now())
   @@index([userId])
+  @@index([expiresAt])
+}
+/// Half-completed owner logins waiting on a TOTP code. Stored rather than held
+/// in process so a restart or a second instance does not strand the login.
+model MfaChallenge {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([userId])
+  @@index([expiresAt])
+}
+/// A priced cart held between /checkout/quote and /orders. Persisted so an open
+/// checkout survives a restart, and claimed atomically so one quote cannot
+/// produce two orders.
+model Quote {
+  id String @id @default(uuid())
+  areaName String
+  items Json
+  expiresAt DateTime
+  consumedAt DateTime?
+  createdAt DateTime @default(now())
   @@index([expiresAt])
 }
 model Category {

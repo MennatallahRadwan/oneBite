@@ -19,8 +19,6 @@ const base32Alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
 const hash = (value: string) => createHash('sha256').update(value).digest('hex');
 
-const pendingChallenges = new Map<string, {userId: string; expiresAt: number}>();
-
 export function hashPassword(password: string) {
   const salt = randomBytes(16).toString('base64url');
   return `${salt}:${scryptSync(password, salt, 64).toString('base64url')}`;
@@ -129,29 +127,53 @@ export async function beginOwnerLogin(email: string, password: string, res: Resp
 
   const challenge = randomBytes(32).toString('base64url');
   const ttl = challengeMinutes * 60 * 1000;
+
+  // Only one challenge is outstanding per owner: starting a new login should
+  // invalidate whatever a previous half-finished attempt left behind.
+  await prisma.mfaChallenge.deleteMany({
+    where: {OR: [{userId: owner.id}, {expiresAt: {lt: new Date()}}]}
+  });
+  await prisma.mfaChallenge.create({
+    data: {
+      userId: owner.id,
+      tokenHash: hash(challenge),
+      expiresAt: new Date(Date.now() + ttl)
+    }
+  });
+
   setCookie(res, challengeName, challenge, ttl);
-  pendingChallenges.set(hash(challenge), {userId: owner.id, expiresAt: Date.now() + ttl});
   return true;
 }
 
 export async function completeOwnerLogin(code: string, req: Request, res: Response) {
   const raw = readCookie(req, challengeName);
-  const challenge = raw && pendingChallenges.get(hash(raw));
-  if (!raw || !challenge || challenge.expiresAt < Date.now()) return false;
-  pendingChallenges.delete(hash(raw));
+  if (!raw) return false;
+
+  const challenge = await prisma.mfaChallenge.findUnique({where: {tokenHash: hash(raw)}});
+  if (!challenge || challenge.expiresAt < new Date()) return false;
+
+  // Consumed before the code is checked, so a challenge cannot be reused to
+  // brute-force codes past the rate limit on this route.
+  const consumed = await prisma.mfaChallenge.deleteMany({where: {id: challenge.id}});
+  if (consumed.count !== 1) return false;
 
   const owner = await prisma.user.findUnique({where: {id: challenge.userId}});
   if (!owner || owner.role !== 'OWNER' || !owner.mfaEnabled || !owner.totpSecretEncrypted) return false;
   if (!validTotp(code, owner.totpSecretEncrypted)) return false;
 
   const token = randomBytes(32).toString('base64url');
-  await prisma.session.create({
-    data: {
-      userId: owner.id,
-      tokenHash: hash(token),
-      expiresAt: new Date(Date.now() + sessionHours * 60 * 60 * 1000)
-    }
-  });
+  await prisma.$transaction([
+    // Successful login is a natural, infrequent moment to clear the table of
+    // sessions nobody can use any more.
+    prisma.session.deleteMany({where: {expiresAt: {lt: new Date()}}}),
+    prisma.session.create({
+      data: {
+        userId: owner.id,
+        tokenHash: hash(token),
+        expiresAt: new Date(Date.now() + sessionHours * 60 * 60 * 1000)
+      }
+    })
+  ]);
   setCookie(res, cookieName, token, sessionHours * 60 * 60 * 1000);
   res.clearCookie(challengeName, {path: cookiePath});
   return {id: owner.id, name: owner.name, email: owner.email};

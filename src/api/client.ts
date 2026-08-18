@@ -105,6 +105,9 @@ export class ApiError extends Error {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${base}${path}`, {
     headers: {'Content-Type': 'application/json', ...(init?.headers || {})},
+    // Sends the owner session cookie when the API is on another origin. Through
+    // the dev proxy the request is same-origin and this changes nothing.
+    credentials: 'include',
     ...init
   });
 
