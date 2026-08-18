@@ -87,6 +87,21 @@ export type Owner = {id: string; name: string; email: string | null};
 
 const base = import.meta.env.VITE_API_URL || '/api/v1';
 
+/**
+ * Carries the API's error code alongside its message. The message is written in
+ * English server-side, so callers showing errors to customers translate from
+ * the code and keep the message only as a fallback.
+ */
+export class ApiError extends Error {
+  constructor(
+    readonly code: string,
+    message: string
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${base}${path}`, {
     headers: {'Content-Type': 'application/json', ...(init?.headers || {})},
@@ -95,7 +110,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(body?.error?.message || 'Request failed');
+    throw new ApiError(body?.error?.code || 'REQUEST_FAILED', body?.error?.message || 'Request failed');
   }
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;

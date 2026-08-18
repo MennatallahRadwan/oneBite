@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import {Minus, Plus, Trash2, ShoppingBag, ArrowRight} from 'lucide-vue-next';
-import {money} from '../data';
+import {money, num} from '../data';
 import {useShopStore} from '../stores/shop';
+import {t} from '../i18n';
 import PageHero from '../components/PageHero.vue';
 import AppLink from '../components/AppLink.vue';
 
@@ -9,19 +10,15 @@ const store = useShopStore();
 </script>
 
 <template>
-  <PageHero
-    eyebrow="Your Selection"
-    title="Shopping Cart"
-    subtitle="Freshly baked and almost on its way."
-  />
+  <PageHero :eyebrow="t('cart.eyebrow')" :title="t('cart.title')" :subtitle="t('cart.subtitle')"/>
 
   <section class="section">
     <div class="container">
       <div v-if="!store.cart.length" class="empty">
         <ShoppingBag :size="48"/>
-        <h2>Your cart is empty</h2>
-        <p>There is always room for one more sweet moment.</p>
-        <AppLink class="btn primary" to="/shop">Start Shopping</AppLink>
+        <h2>{{ t('cart.empty.title') }}</h2>
+        <p>{{ t('cart.empty.blurb') }}</p>
+        <AppLink class="btn primary" to="/shop">{{ t('cart.empty.cta') }}</AppLink>
       </div>
 
       <div v-else class="cart-layout">
@@ -33,16 +30,19 @@ const store = useShopStore();
                 <h3>{{ item.name }}</h3>
               </AppLink>
               <p class="name-alt" dir="auto">{{ item.nameAlt }}</p>
-              <ul v-if="item.variantName || item.addonNames.length || item.cakeText" class="line-options">
+              <ul
+                v-if="item.variantName || item.addonNames.length || item.cakeText"
+                class="line-options"
+              >
                 <li v-if="item.variantName">{{ item.variantName }}</li>
                 <li v-for="addon in item.addonNames" :key="addon">{{ addon }}</li>
-                <li v-if="item.cakeText">Message: “{{ item.cakeText }}”</li>
+                <li v-if="item.cakeText">{{ t('cart.message', {text: item.cakeText}) }}</li>
               </ul>
               <strong>{{ money(item.unitPrice) }}</strong>
             </div>
             <div class="qty">
               <button @click="store.qty(item.lineId, item.quantity - 1)"><Minus :size="16"/></button>
-              <b>{{ item.quantity }}</b>
+              <b>{{ num(item.quantity) }}</b>
               <button @click="store.qty(item.lineId, item.quantity + 1)"><Plus :size="16"/></button>
             </div>
             <strong class="line-total">{{ money(item.unitPrice * item.quantity) }}</strong>
@@ -51,14 +51,16 @@ const store = useShopStore();
         </div>
 
         <aside class="summary">
-          <h2>Order Summary</h2>
-          <div><span>Subtotal</span><b>{{ money(store.cartTotal) }}</b></div>
-          <div><span>Delivery</span><b>Calculated at checkout</b></div>
-          <div class="total"><span>Total</span><b>{{ money(store.cartTotal) }}</b></div>
+          <h2>{{ t('cart.summary') }}</h2>
+          <div><span>{{ t('cart.subtotal') }}</span><b>{{ money(store.cartTotal) }}</b></div>
+          <div><span>{{ t('cart.delivery') }}</span><b>{{ t('cart.deliveryAtCheckout') }}</b></div>
+          <div class="total">
+            <span>{{ t('cart.total') }}</span><b>{{ money(store.cartTotal) }}</b>
+          </div>
           <AppLink class="btn primary full" to="/checkout">
-            Proceed to Checkout <ArrowRight :size="17"/>
+            {{ t('cart.checkout') }} <ArrowRight :size="17"/>
           </AppLink>
-          <p>Cash on delivery · Every order is confirmed by the bakery</p>
+          <p>{{ t('cart.note') }}</p>
         </aside>
       </div>
     </div>

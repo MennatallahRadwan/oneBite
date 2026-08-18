@@ -2,10 +2,11 @@
 import {computed, onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {ArrowLeft, ArrowRight, Check, Clock, Gift, MapPin, Wallet} from 'lucide-vue-next';
-import {money} from '../data';
+import {money, num} from '../data';
 import {api, type DeliveryArea, type Quote, type Slot} from '../api/client';
 import {useShopStore} from '../stores/shop';
-import {localePath} from '../i18n';
+import {localePath, locale, t, type MessageKey} from '../i18n';
+import {errorMessage} from '../i18n/errors';
 import AppLink from '../components/AppLink.vue';
 
 const router = useRouter();
@@ -39,16 +40,27 @@ const form = ref({
   anonymous: false
 });
 
+// Values stay English because the server stores the governorate verbatim on
+// the order; only the label shown to the customer is translated.
 const governorates = ['Capital', 'Hawalli', 'Farwaniya', 'Mubarak Al-Kabeer', 'Ahmadi', 'Jahra'];
-const stepLabels = ['Delivery', 'Schedule', 'Gift details'];
+const stepLabels = computed(() => [
+  t('checkout.step.delivery'),
+  t('checkout.step.schedule'),
+  t('checkout.step.gift')
+]);
 
 onMounted(async () => {
   try {
     areas.value = (await api.deliveryAreas()).items;
   } catch {
-    error.value = 'Unable to load delivery areas. Please refresh and try again.';
+    error.value = t('error.areas');
   }
 });
+
+// The sentence wraps a link, so it is split around its {link} placeholder
+// rather than being assembled from fragments — Arabic puts the link elsewhere
+// in the sentence than English does.
+const saveLinkParts = computed(() => t('checkout.saveLink').split('{link}'));
 
 // Before a quote exists the fee comes from the selected area, so the customer
 // sees what delivery costs without having to complete the whole form first.
@@ -79,7 +91,11 @@ const selectedSlot = computed<Slot | null>(
 );
 
 const dateLabel = (date: string) =>
-  new Intl.DateTimeFormat('en-KW', {weekday: 'short', day: 'numeric', month: 'short'}).format(
+  new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-KW' : 'en-KW', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short'
+  }).format(
     new Date(`${date}T12:00:00Z`)
   );
 
@@ -93,16 +109,13 @@ const requiredAddress = () =>
   form.value.street &&
   form.value.building;
 
-const messageFrom = (reason: unknown, fallback: string) =>
-  reason instanceof Error ? reason.message : fallback;
-
 async function getQuote() {
   if (!requiredAddress()) {
-    error.value = 'Please complete the required delivery details.';
+    error.value = t('checkout.error.address');
     return;
   }
   if (!cartLines.value.length) {
-    error.value = 'Your cart is empty.';
+    error.value = t('checkout.error.emptyCart');
     return;
   }
 
@@ -117,7 +130,7 @@ async function getQuote() {
     }
     step.value = 1;
   } catch (reason) {
-    error.value = messageFrom(reason, 'Unable to check availability.');
+    error.value = errorMessage(reason, 'error.availability');
   } finally {
     loading.value = false;
   }
@@ -147,7 +160,7 @@ async function submitOrder() {
     });
     store.clear();
   } catch (reason) {
-    error.value = messageFrom(reason, 'Unable to create your order request.');
+    error.value = errorMessage(reason, 'error.order');
   } finally {
     loading.value = false;
   }
@@ -160,7 +173,7 @@ async function next() {
 
   if (step.value === 1) {
     if (!selectedSlot.value) {
-      error.value = 'Please select an available delivery window.';
+      error.value = t('checkout.error.slot');
       return;
     }
     step.value = 2;
@@ -176,27 +189,22 @@ async function next() {
     <div class="container">
       <div v-if="created" class="success-card">
         <div class="success-icon"><Check/></div>
-        <span class="eyebrow">Order request received</span>
-        <h1>Awaiting bakery confirmation</h1>
-        <p>
-          Your request <b>{{ created.orderNumber }}</b> is holding its selected capacity while the
-          bakery reviews it.
-        </p>
+        <span class="eyebrow">{{ t('checkout.received') }}</span>
+        <h1>{{ t('checkout.awaiting') }}</h1>
+        <p>{{ t('checkout.holding', {number: created.orderNumber}) }}</p>
         <button class="btn primary" @click="router.push(localePath(`/order/${created!.trackingToken}`))">
-          Track your order
+          {{ t('checkout.track') }}
         </button>
         <p class="form-note">
-          Save this link. If you lose it you can find your order again from
-          <AppLink to="/track">order tracking</AppLink> using your order number and phone
-          number.
+          {{ saveLinkParts[0] }}<AppLink to="/track">{{ t('checkout.saveLinkTarget') }}</AppLink>{{ saveLinkParts[1] }}
         </p>
       </div>
 
       <template v-else>
         <div class="checkout-head">
-          <span class="eyebrow">Checkout</span>
-          <h1>Reserve your delivery request</h1>
-          <p>Cash on delivery. Final confirmation is always handled by the bakery.</p>
+          <span class="eyebrow">{{ t('checkout.eyebrow') }}</span>
+          <h1>{{ t('checkout.title') }}</h1>
+          <p>{{ t('checkout.subtitle') }}</p>
         </div>
 
         <div class="steps">
@@ -205,7 +213,7 @@ async function next() {
             :key="label"
             :class="{active: index === step, done: index < step}"
           >
-            <b>{{ index < step ? '✓' : index + 1 }}</b>{{ label }}
+            <b>{{ index < step ? '✓' : num(index + 1) }}</b>{{ label }}
           </span>
         </div>
 
@@ -214,50 +222,54 @@ async function next() {
             <p v-if="error" class="form-note" role="alert">{{ error }}</p>
 
             <section v-if="step === 0">
-              <h2><MapPin/> Delivery details</h2>
-              <p class="form-note">Choose your area to see the delivery fee and available windows.</p>
+              <h2><MapPin/> {{ t('checkout.delivery.title') }}</h2>
+              <p class="form-note">{{ t('checkout.delivery.blurb') }}</p>
               <div class="form-grid">
-                <label>First name<input v-model="form.first" placeholder="First name"></label>
-                <label>Last name<input v-model="form.last" placeholder="Last name"></label>
+                <label>{{ t('checkout.field.first') }}<input v-model="form.first"></label>
+                <label>{{ t('checkout.field.last') }}<input v-model="form.last"></label>
                 <label class="span2">
-                  Kuwait phone<input v-model="form.phone" placeholder="+965 9XXX XXXX">
+                  {{ t('checkout.field.phone') }}
+                  <input v-model="form.phone" dir="ltr" :placeholder="t('checkout.field.phonePlaceholder')">
                 </label>
                 <label>
-                  Governorate
+                  {{ t('checkout.field.governorate') }}
                   <select v-model="form.governorate">
-                    <option disabled value="">Choose governorate</option>
-                    <option v-for="name in governorates" :key="name">{{ name }}</option>
+                    <option disabled value="">{{ t('checkout.field.governoratePlaceholder') }}</option>
+                    <option v-for="name in governorates" :key="name" :value="name">{{ t((`governorate.${name}`) as MessageKey) }}</option>
                   </select>
                 </label>
                 <label>
-                  Delivery area
+                  {{ t('checkout.field.area') }}
                   <select v-model="form.area">
-                    <option disabled value="">Choose area</option>
+                    <option disabled value="">{{ t('checkout.field.areaPlaceholder') }}</option>
                     <option v-for="area in areas" :key="area.nameEn" :value="area.nameEn">
-                      {{ area.nameEn }} · {{ money(area.feeFils / 1000) }}
+                      {{ locale === 'ar' ? area.nameAr : area.nameEn }} · {{ money(area.feeFils / 1000) }}
                     </option>
                   </select>
                 </label>
-                <label>Block<input v-model="form.block"></label>
-                <label>Street<input v-model="form.street"></label>
-                <label>Building<input v-model="form.building"></label>
-                <label>Floor / apartment <small>(if applicable)</small><input v-model="form.floor"></label>
+                <label>{{ t('checkout.field.block') }}<input v-model="form.block"></label>
+                <label>{{ t('checkout.field.street') }}<input v-model="form.street"></label>
+                <label>{{ t('checkout.field.building') }}<input v-model="form.building"></label>
+                <label>
+                  {{ t('checkout.field.floor') }} <small>{{ t('checkout.field.floorHint') }}</small>
+                  <input v-model="form.floor">
+                </label>
                 <label class="span2">
-                  Delivery instructions
+                  {{ t('checkout.field.instructions') }}
                   <textarea
                     v-model="form.instructions"
-                    placeholder="Written directions, gate code, or a preferred call time"
+                    :placeholder="t('checkout.field.instructionsPlaceholder')"
                   ></textarea>
                 </label>
               </div>
             </section>
 
             <section v-else-if="step === 1">
-              <h2><Clock/> Delivery schedule</h2>
+              <h2><Clock/> {{ t('checkout.schedule.title') }}</h2>
               <div class="availability-notice">
-                Availability below is calculated from current production and delivery capacity.
+                {{ t('checkout.schedule.notice') }}
               </div>
-              <h3>Select an available date</h3>
+              <h3>{{ t('checkout.schedule.pickDate') }}</h3>
               <div class="choice-grid">
                 <button
                   v-for="date in dates"
@@ -268,7 +280,7 @@ async function next() {
                   {{ dateLabel(date) }}
                 </button>
               </div>
-              <h3>Select a delivery window</h3>
+              <h3>{{ t('checkout.schedule.pickWindow') }}</h3>
               <div class="choice-grid">
                 <button
                   v-for="slot in slots"
@@ -276,65 +288,62 @@ async function next() {
                   :class="{selected: form.slot === slot.window}"
                   @click="form.slot = slot.window"
                 >
-                  {{ slot.window }}
+                  <bdi>{{ slot.window }}</bdi>
                 </button>
               </div>
             </section>
 
             <section v-else>
-              <h2><Gift/> Gift details</h2>
+              <h2><Gift/> {{ t('checkout.gift.title') }}</h2>
               <label class="toggle-card">
                 <input v-model="form.gift" type="checkbox">
                 <span>
-                  <b>This is a gift</b>
-                  <small>Gift details are not yet sent to the bakery.</small>
+                  <b>{{ t('checkout.gift.toggle') }}</b>
+                  <small>{{ t('checkout.gift.notice') }}</small>
                 </span>
               </label>
               <div class="cod-notice">
                 <Wallet/>
                 <span>
-                  <b>Cash on delivery</b>
-                  <small>
-                    Payment is collected by the driver after delivery. No cards or online payment
-                    methods are accepted.
-                  </small>
+                  <b>{{ t('checkout.cod.title') }}</b>
+                  <small>{{ t('checkout.cod.blurb') }}</small>
                 </span>
               </div>
             </section>
 
             <div class="checkout-actions">
               <button class="btn secondary" :disabled="step === 0 || loading" @click="step--">
-                <ArrowLeft :size="17"/> Back
+                <ArrowLeft :size="17"/> {{ t('checkout.back') }}
               </button>
               <button class="btn primary" :disabled="loading" @click="next">
-                {{ loading ? 'Please wait…' : step === 2 ? 'Submit order request' : 'Continue' }}
+                {{ loading ? t('checkout.wait') : step === 2 ? t('checkout.submit') : t('checkout.continue') }}
                 <ArrowRight v-if="!loading" :size="17"/>
               </button>
             </div>
           </div>
 
           <aside class="summary">
-            <h2>Your Order</h2>
+            <h2>{{ t('checkout.summary') }}</h2>
             <div v-for="item in store.cart" :key="item.lineId" class="mini-order">
               <img :src="item.image" alt="">
               <span>
                 <b>{{ item.name }}</b>
                 <small>{{ [item.variantName, ...item.addonNames].filter(Boolean).join(' · ') }}</small>
-                <small v-if="item.cakeText">Message: “{{ item.cakeText }}”</small>
-                <small>Qty {{ item.quantity }}</small>
+                <small v-if="item.cakeText">{{ t('cart.message', {text: item.cakeText}) }}</small>
+                <small>{{ t('cart.quantity', {count: item.quantity}) }}</small>
               </span>
               <strong>{{ money(item.unitPrice * item.quantity) }}</strong>
             </div>
             <div>
-              <span>Subtotal</span>
+              <span>{{ t('cart.subtotal') }}</span>
               <b>{{ quote ? money(quote.subtotalFils / 1000) : money(store.cartTotal) }}</b>
             </div>
             <div>
-              <span>Area delivery fee</span>
-              <b>{{ deliveryFee === null ? 'Select area' : money(deliveryFee) }}</b>
+              <span>{{ t('checkout.areaFee') }}</span>
+              <b>{{ deliveryFee === null ? t('checkout.selectArea') : money(deliveryFee) }}</b>
             </div>
-            <div class="total"><span>Total</span><b>{{ money(total) }}</b></div>
-            <p>Final price and availability are verified before your reservation is created.</p>
+            <div class="total"><span>{{ t('cart.total') }}</span><b>{{ money(total) }}</b></div>
+            <p>{{ t('checkout.verifyNote') }}</p>
           </aside>
         </div>
       </template>
