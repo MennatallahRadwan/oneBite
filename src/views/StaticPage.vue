@@ -1,77 +1,52 @@
 <script setup lang="ts">
-import {ref} from 'vue';
+import {computed, ref} from 'vue';
 import {img} from '../data';
+import {t} from '../i18n';
 import PageHero from '../components/PageHero.vue';
 
 defineProps<{type: string}>();
 
 const open = ref(0);
 
-const faqs = [
-  {
-    question: 'How far in advance should I order?',
-    answer:
-      'Each product has its own lead time, and the earliest date we can offer is calculated from everything in your cart together. The available dates shown at checkout already account for it.'
-  },
-  {
-    question: 'Do you offer same-day delivery?',
-    answer:
-      'No. Every order is made to order and needs at least its lead time before the earliest available delivery date, so we do not promise same-day delivery.'
-  },
-  {
-    question: 'Can I customize a cake?',
-    answer:
-      'You can choose from the sizes and packaging options listed on each product, and add a short message on cakes that offer it. We do not take free-form custom designs through the website.'
-  },
-  {
-    question: 'What are your delivery fees?',
-    answer:
-      'The fee depends on your delivery area and is shown at checkout once you select it. There is no free-delivery threshold.'
-  },
-  {
-    question: 'How should I store my order?',
-    answer:
-      'Cakes and cheesecakes should be refrigerated and are best enjoyed within two days. Pastries and cookies keep at room temperature in a sealed container.'
-  },
-  {
-    question: 'Do you cater for allergies?',
-    answer:
-      'Every product lists the allergens it contains on its page. Our kitchen handles gluten, dairy, eggs, nuts and sesame, so we cannot guarantee any product is free from traces of them.'
-  }
-];
+const faqs = computed(() => [
+  {question: t('faq.q1'), answer: t('faq.a1')},
+  {question: t('faq.q2'), answer: t('faq.a2')},
+  {question: t('faq.q3'), answer: t('faq.a3')},
+  {question: t('faq.q4'), answer: t('faq.a4')},
+  {question: t('faq.q5'), answer: t('faq.a5')},
+  {question: t('faq.q6'), answer: t('faq.a6')}
+]);
 
-const topics = ['General question', 'Custom order', 'Existing order', 'Feedback'];
+const topics = computed(() => [
+  t('contact.form.topicGeneral'),
+  t('contact.form.topicCustom'),
+  t('contact.form.topicExisting'),
+  t('contact.form.topicFeedback')
+]);
 
-const values = [
-  {number: '01', title: 'Fresh, always', copy: 'We bake daily and never compromise on freshness.'},
-  {number: '02', title: 'Made by hand', copy: 'Every finish, garnish and package gets a human touch.'},
-  {number: '03', title: 'Made for Kuwait', copy: 'Global inspiration, local tastes and dependable delivery.'}
-];
+const values = computed(() => [
+  {number: '01', title: t('about.value1'), copy: t('about.value1Blurb')},
+  {number: '02', title: t('about.value2'), copy: t('about.value2Blurb')},
+  {number: '03', title: t('about.value3'), copy: t('about.value3Blurb')}
+]);
 </script>
 
 <template>
   <template v-if="type === 'about'">
     <PageHero
-      eyebrow="Our Story"
-      title="A little bakery with a big heart"
-      subtitle="Creating beautiful, memorable bites in Kuwait since 2021."
+      :eyebrow="t('about.eyebrow')"
+      :title="t('about.title')"
+      :subtitle="t('about.subtitle')"
     />
 
     <section class="section">
       <div class="container story-grid">
         <img :src="img('1556909114-f6e7ad7d3136')">
         <div>
-          <span class="eyebrow">How It Started</span>
-          <h2>From one kitchen to thousands of celebrations</h2>
-          <p>
-            One Bite began with a simple belief: dessert should do more than taste good. It should
-            bring people together, make ordinary moments feel special and become part of the memories
-            we keep.
-          </p>
-          <p>
-            We bake every product in small batches, choose ingredients with care and put the same
-            attention into a weekday pastry as we do a celebration cake.
-          </p>
+          <span class="eyebrow">{{ t('about.startedEyebrow') }}</span>
+          <h2>{{ t('about.startedTitle') }}</h2>
+          <p>{{ t('about.p1') }}</p>
+          <p>{{ t('about.p2') }}</p>
         </div>
       </div>
     </section>
@@ -88,11 +63,7 @@ const values = [
   </template>
 
   <template v-else-if="type === 'faq'">
-    <PageHero
-      eyebrow="Help Center"
-      title="Frequently Asked Questions"
-      subtitle="Everything you need to know about ordering from One Bite."
-    />
+    <PageHero :eyebrow="t('faq.eyebrow')" :title="t('faq.title')" :subtitle="t('faq.subtitle')"/>
 
     <section class="section">
       <div class="container faq-list">
@@ -109,32 +80,50 @@ const values = [
 
   <template v-else>
     <PageHero
-      eyebrow="We’re Here to Help"
-      title="Contact One Bite"
-      subtitle="Questions, custom orders or feedback? We would love to hear from you."
+      :eyebrow="t('contact.eyebrow')"
+      :title="t('contact.title')"
+      :subtitle="t('contact.subtitle')"
     />
 
     <section class="section">
       <div class="container contact-grid">
         <div>
-          <h2>Get in touch</h2>
-          <p>Our customer care team is available daily from 9 AM to 10 PM.</p>
-          <div class="contact-card"><b>WhatsApp &amp; Phone</b><p>+965 2222 1000</p></div>
-          <div class="contact-card"><b>Email</b><p>hello@onebite.com</p></div>
-          <div class="contact-card"><b>Bakery</b><p>Kuwait City, Kuwait</p></div>
+          <h2>{{ t('contact.heading') }}</h2>
+          <p>{{ t('contact.hours') }}</p>
+          <div class="contact-card">
+            <b>{{ t('contact.phoneLabel') }}</b>
+            <p><bdi>+965 2222 1000</bdi></p>
+          </div>
+          <div class="contact-card">
+            <b>{{ t('contact.emailLabel') }}</b>
+            <p><bdi>hello@onebite.com</bdi></p>
+          </div>
+          <div class="contact-card">
+            <b>{{ t('contact.bakeryLabel') }}</b>
+            <p>{{ t('footer.location') }}</p>
+          </div>
         </div>
 
         <form class="contact-form" @submit.prevent>
-          <label>Name<input placeholder="Your name"></label>
-          <label>Email<input placeholder="you@example.com"></label>
           <label>
-            Topic
+            {{ t('contact.form.name') }}
+            <input :placeholder="t('contact.form.namePlaceholder')">
+          </label>
+          <label>
+            {{ t('contact.form.email') }}
+            <input dir="ltr" placeholder="you@example.com">
+          </label>
+          <label>
+            {{ t('contact.form.topic') }}
             <select>
               <option v-for="topic in topics" :key="topic">{{ topic }}</option>
             </select>
           </label>
-          <label>Message<textarea rows="6" placeholder="How can we help?"></textarea></label>
-          <button class="btn primary">Send Message</button>
+          <label>
+            {{ t('contact.form.message') }}
+            <textarea rows="6" :placeholder="t('contact.form.messagePlaceholder')"></textarea>
+          </label>
+          <button class="btn primary">{{ t('contact.form.send') }}</button>
         </form>
       </div>
     </section>

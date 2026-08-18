@@ -5,6 +5,8 @@ import {Check, ChefHat, Clock3, Home, Truck} from 'lucide-vue-next';
 import PageHero from '../components/PageHero.vue';
 import {api, type TrackingOrder} from '../api/client';
 import AppLink from '../components/AppLink.vue';
+import {t, type MessageKey} from '../i18n';
+import {errorMessage} from '../i18n/errors';
 
 const route = useRoute();
 const order = ref<TrackingOrder | null>(null);
@@ -12,10 +14,10 @@ const error = ref('');
 const loading = ref(true);
 
 const stages = [
-  {key: 'CONFIRMED', label: 'Confirmed', icon: Check},
-  {key: 'PREPARING', label: 'Preparing', icon: ChefHat},
-  {key: 'OUT_FOR_DELIVERY', label: 'Out for delivery', icon: Truck},
-  {key: 'DELIVERED', label: 'Delivered', icon: Home}
+  {key: 'CONFIRMED', icon: Check},
+  {key: 'PREPARING', icon: ChefHat},
+  {key: 'OUT_FOR_DELIVERY', icon: Truck},
+  {key: 'DELIVERED', icon: Home}
 ];
 
 const currentStage = computed(() => {
@@ -28,17 +30,22 @@ const currentStage = computed(() => {
 const statusText = computed(() => {
   const current = order.value;
   if (!current) return '';
-  if (current.status === 'PENDING_CONFIRMATION') return 'Awaiting bakery confirmation';
-  if (current.status === 'REJECTED') return 'This order request was not accepted';
-  if (current.status === 'CANCELLED') return 'This order has been cancelled';
-  return current.fulfilmentStatus.replace(/_/g, ' ').toLowerCase();
+  if (current.status === 'PENDING_CONFIRMATION') return t('tracking.status.pending');
+  if (current.status === 'REJECTED') return t('tracking.status.rejected');
+  if (current.status === 'CANCELLED') return t('tracking.status.cancelled');
+  return t(`tracking.fulfilment.${current.fulfilmentStatus}` as MessageKey);
 });
+
+const stageNote = (index: number) => {
+  if (index === currentStage.value) return t('tracking.stage.current');
+  return index < currentStage.value ? t('tracking.stage.complete') : t('tracking.stage.upcoming');
+};
 
 onMounted(async () => {
   try {
     order.value = await api.tracking(String(route.params.id));
   } catch (reason) {
-    error.value = reason instanceof Error ? reason.message : 'Unable to load this tracking record.';
+    error.value = errorMessage(reason, 'error.notFound');
   } finally {
     loading.value = false;
   }
@@ -47,19 +54,19 @@ onMounted(async () => {
 
 <template>
   <PageHero
-    :eyebrow="order ? `Order ${order.publicNumber}` : 'Order tracking'"
-    title="Track Your Order"
-    :subtitle="loading ? 'Loading your order…' : statusText"
+    :eyebrow="order ? t('tracking.orderEyebrow', {number: order.publicNumber}) : t('tracking.eyebrow')"
+    :title="t('tracking.title')"
+    :subtitle="loading ? t('tracking.loadingOrder') : statusText"
   />
 
   <section class="section">
     <div class="container track-card">
       <p v-if="error" class="form-note" role="alert">{{ error }}</p>
-      <p v-else-if="loading" class="form-note">Loading tracking details…</p>
+      <p v-else-if="loading" class="form-note">{{ t('tracking.loadingDetails') }}</p>
 
       <template v-else-if="order">
         <div v-if="order.status === 'PENDING_CONFIRMATION'" class="availability-notice">
-          <Clock3/> Your selected capacity is reserved while the bakery reviews this request.
+          <Clock3/> {{ t('tracking.pendingNotice') }}
         </div>
         <div
           v-else-if="order.status === 'REJECTED' || order.status === 'CANCELLED'"
@@ -79,31 +86,29 @@ onMounted(async () => {
           </div>
           <div class="status-labels">
             <span v-for="(stage, index) in stages" :key="stage.key">
-              <b>{{ stage.label }}</b>
-              <small>
-                {{ index === currentStage ? 'Current status' : index < currentStage ? 'Complete' : 'Upcoming' }}
-              </small>
+              <b>{{ t(`tracking.stage.${stage.key}` as MessageKey) }}</b>
+              <small>{{ stageNote(index) }}</small>
             </span>
           </div>
         </div>
 
         <p v-if="order.isDelayed" class="form-note">
-          Delay notice: {{ order.delayReason || 'Please contact the bakery for an update.' }}
+          {{ t('tracking.delay', {reason: order.delayReason || t('tracking.delayDefault')}) }}
         </p>
 
         <div class="tracking-grid">
           <div>
-            <h2>Delivery area</h2>
-            <p><b>{{ order.areaName }}</b><br>Address details remain private.</p>
+            <h2>{{ t('tracking.area') }}</h2>
+            <p><b>{{ order.areaName }}</b><br>{{ t('tracking.areaPrivate') }}</p>
           </div>
           <div>
-            <h2>Delivery window</h2>
-            <p><b>{{ order.deliveryWindow }}</b><br>Cash on delivery</p>
+            <h2>{{ t('tracking.window') }}</h2>
+            <p><b><bdi>{{ order.deliveryWindow }}</bdi></b><br>{{ t('tracking.cod') }}</p>
           </div>
           <div>
-            <h2>Need Help?</h2>
-            <p>Our team is ready to help with your order.</p>
-            <AppLink to="/contact">Contact support →</AppLink>
+            <h2>{{ t('tracking.help') }}</h2>
+            <p>{{ t('tracking.helpBlurb') }}</p>
+            <AppLink to="/contact">{{ t('tracking.helpLink') }}</AppLink>
           </div>
         </div>
       </template>

@@ -4,7 +4,7 @@ import {useRouter} from 'vue-router';
 import {PackageSearch} from 'lucide-vue-next';
 import PageHero from '../components/PageHero.vue';
 import {api} from '../api/client';
-import {localePath} from '../i18n';
+import {localePath, t} from '../i18n';
 
 const router = useRouter();
 const orderNumber = ref('');
@@ -12,13 +12,9 @@ const phone = ref('');
 const error = ref('');
 const loading = ref(false);
 
-// The API answers a wrong order number and a wrong phone identically, so the
-// message here stays generic and never confirms whether the number exists.
-const notFound = 'We could not find an order matching that number and phone number.';
-
 async function lookup() {
   if (!orderNumber.value.trim() || !phone.value.trim()) {
-    error.value = 'Please enter both your order number and the phone number used at checkout.';
+    error.value = t('track.missing');
     return;
   }
 
@@ -28,7 +24,9 @@ async function lookup() {
     const {trackingToken} = await api.trackingLookup(orderNumber.value.trim(), phone.value.trim());
     router.replace(localePath(`/order/${trackingToken}`));
   } catch {
-    error.value = notFound;
+    // The API answers a wrong order number and a wrong phone identically, so
+    // this message stays generic and never confirms the number exists.
+    error.value = t('track.notFound');
   } finally {
     loading.value = false;
   }
@@ -37,9 +35,9 @@ async function lookup() {
 
 <template>
   <PageHero
-    eyebrow="Order tracking"
-    title="Find Your Order"
-    subtitle="Enter your order number and the phone number you used at checkout."
+    :eyebrow="t('tracking.eyebrow')"
+    :title="t('track.title')"
+    :subtitle="t('track.subtitle')"
   />
 
   <section class="section">
@@ -48,22 +46,31 @@ async function lookup() {
 
       <form class="form-grid" @submit.prevent="lookup">
         <label class="span2">
-          Order number
-          <input v-model="orderNumber" placeholder="OB-XXXXXXXX" autocomplete="off" required>
+          {{ t('track.orderNumber') }}
+          <input
+            v-model="orderNumber"
+            dir="ltr"
+            :placeholder="t('track.orderPlaceholder')"
+            autocomplete="off"
+            required
+          >
         </label>
         <label class="span2">
-          Kuwait phone
-          <input v-model="phone" placeholder="+965 9XXX XXXX" autocomplete="tel" required>
+          {{ t('track.phone') }}
+          <input
+            v-model="phone"
+            dir="ltr"
+            :placeholder="t('checkout.field.phonePlaceholder')"
+            autocomplete="tel"
+            required
+          >
         </label>
         <button class="btn primary span2" :disabled="loading">
-          <PackageSearch :size="17"/> {{ loading ? 'Looking up…' : 'Find my order' }}
+          <PackageSearch :size="17"/> {{ loading ? t('track.searching') : t('track.submit') }}
         </button>
       </form>
 
-      <p class="form-note">
-        Keep the tracking link from your confirmation screen — it opens your order directly without
-        this step.
-      </p>
+      <p class="form-note">{{ t('track.hint') }}</p>
     </div>
   </section>
 </template>
