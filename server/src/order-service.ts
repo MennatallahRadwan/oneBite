@@ -22,9 +22,41 @@ type OrderRequest = {
 const day = (value: string) => new Date(`${value}T00:00:00.000Z`);
 const slotUnavailable = 'The selected delivery slot is no longer available.';
 
+/** Attempts, including the first, before a write conflict is given up on. */
+const maxAttempts = 4;
+
 export class OrderConflictError extends Error {}
 
+/**
+ * Postgres aborts a Serializable transaction when a concurrent one touched the
+ * same rows. Two customers reserving the same day is expected traffic, not an
+ * error, so the losing transaction is retried rather than surfaced as a 500.
+ */
+function isWriteConflict(error: unknown) {
+  const code = (error as {code?: string} | null)?.code;
+  // P2034 is Prisma's write-conflict/deadlock code; 40001 and 40P01 are the
+  // underlying Postgres serialization_failure and deadlock_detected.
+  return code === 'P2034' || code === '40001' || code === '40P01';
+}
+
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export async function createReservedOrder(input: OrderRequest) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await reserveOnce(input);
+    } catch (error) {
+      if (!isWriteConflict(error)) throw error;
+      // Persistent contention is a capacity conflict from the customer's point
+      // of view, not an internal failure.
+      if (attempt >= maxAttempts) throw new OrderConflictError(slotUnavailable);
+      // Stagger the retries so two colliding checkouts do not line up again.
+      await wait(attempt * 25);
+    }
+  }
+}
+
+async function reserveOnce(input: OrderRequest) {
   // Prices, capacity and options are all resolved server-side from the stored
   // cart; nothing about the money or the reservation comes from the request.
   const availability = await calculateAvailability(input.items, input.area);

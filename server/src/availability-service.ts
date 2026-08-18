@@ -57,23 +57,51 @@ export async function calculateAvailability(
   const area = await prisma.deliveryArea.findFirst({where: {nameEn: areaName, active: true}});
   if (!area) return unavailableResult('Temporarily unavailable.', capacityPoints);
 
-  const availableSlots: {date: string; window: string}[] = [];
+  // Candidate days first, then three queries covering the whole horizon. Asking
+  // per day instead cost ~90 sequential round trips and made a quote take
+  // several seconds.
+  const candidates: Date[] = [];
   for (let offset = leadDays; offset < horizonDays; offset++) {
     const candidate = new Date();
     candidate.setUTCDate(candidate.getUTCDate() + offset);
     if (candidate.getUTCDay() === 5) continue;
+    candidates.push(startOfDay(candidate));
+  }
+  if (!candidates.length) {
+    return {unavailable: false, capacityPoints, earliestSlot: null, availableSlots: [], lines};
+  }
 
-    const date = startOfDay(candidate);
-    const [capacity, reservations, slots] = await Promise.all([
-      prisma.productionCapacity.findUnique({where: {date}}),
-      prisma.capacityReservation.aggregate({where: {date, active: true}, _sum: {points: true}}),
-      prisma.deliverySlot.findMany({where: {areaId: area.id, date}, orderBy: {windowStart: 'asc'}})
-    ]);
+  const [capacities, reservations, slots] = await Promise.all([
+    prisma.productionCapacity.findMany({where: {date: {in: candidates}}}),
+    prisma.capacityReservation.groupBy({
+      by: ['date'],
+      where: {date: {in: candidates}, active: true},
+      _sum: {points: true}
+    }),
+    prisma.deliverySlot.findMany({
+      where: {areaId: area.id, date: {in: candidates}},
+      orderBy: [{date: 'asc'}, {windowStart: 'asc'}]
+    })
+  ]);
 
-    const totalPoints = capacity?.totalPoints ?? defaultProductionPoints;
-    if ((reservations._sum.points ?? 0) + capacityPoints > totalPoints) continue;
+  const totalByDate = new Map(capacities.map(row => [row.date.getTime(), row.totalPoints]));
+  const usedByDate = new Map(reservations.map(row => [row.date.getTime(), row._sum.points ?? 0]));
+  const slotsByDate = new Map<number, typeof slots>();
+  for (const slot of slots) {
+    const key = slot.date.getTime();
+    const existing = slotsByDate.get(key);
+    if (existing) existing.push(slot);
+    else slotsByDate.set(key, [slot]);
+  }
 
-    for (const slot of slots.filter(slot => slot.reserved < slot.capacity)) {
+  const availableSlots: {date: string; window: string}[] = [];
+  for (const date of candidates) {
+    const key = date.getTime();
+    const totalPoints = totalByDate.get(key) ?? defaultProductionPoints;
+    if ((usedByDate.get(key) ?? 0) + capacityPoints > totalPoints) continue;
+
+    for (const slot of slotsByDate.get(key) ?? []) {
+      if (slot.reserved >= slot.capacity) continue;
       availableSlots.push({date: dayKey(date), window: `${slot.windowStart}–${slot.windowEnd}`});
     }
   }
