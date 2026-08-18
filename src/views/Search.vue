@@ -14,7 +14,7 @@ const result = computed(() => {
   const needle = query.value.trim().toLowerCase();
   if (!needle) return catalog.products.slice(0, 4);
   return catalog.products.filter(product =>
-    (product.name + product.nameAr + product.description).toLowerCase().includes(needle)
+    (product.name + product.nameAlt + product.description).toLowerCase().includes(needle)
   );
 });
 </script>

@@ -32,7 +32,7 @@ const store = useShopStore();
               <AppLink :to="`/product/${item.slug}`">
                 <h3>{{ item.name }}</h3>
               </AppLink>
-              <p>{{ item.nameAr }}</p>
+              <p class="name-alt" dir="auto">{{ item.nameAlt }}</p>
               <ul v-if="item.variantName || item.addonNames.length || item.cakeText" class="line-options">
                 <li v-if="item.variantName">{{ item.variantName }}</li>
                 <li v-for="addon in item.addonNames" :key="addon">{{ addon }}</li>

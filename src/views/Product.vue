@@ -100,7 +100,7 @@ function add() {
 
       <div class="detail-copy">
         <h1>{{ product.name }}</h1>
-        <p class="arabic large">{{ product.nameAr }}</p>
+        <p class="name-alt large" dir="auto">{{ product.nameAlt }}</p>
         <strong class="detail-price">From {{ money(product.price) }}</strong>
         <p class="description">{{ product.description }}</p>
 

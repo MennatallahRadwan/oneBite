@@ -28,7 +28,7 @@ const store = useShopStore();
       <AppLink :to="`/product/${product.id}`">
         <h3>{{ product.name }}</h3>
       </AppLink>
-      <p class="arabic">{{ product.nameAr }}</p>
+      <p class="name-alt" dir="auto">{{ product.nameAlt }}</p>
       <div class="product-bottom">
         <strong>From {{ money(product.price) }}</strong>
         <AppLink class="add" :to="`/product/${product.id}`">

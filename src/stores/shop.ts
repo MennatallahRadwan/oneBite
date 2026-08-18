@@ -11,8 +11,9 @@ export type CartItem = {
   /** Identity of a configured line: the same cake in two sizes is two lines. */
   lineId: string;
   slug: string;
+  /** Names are stored in both languages so switching locale relabels the cart. */
   name: string;
-  nameAr: string;
+  nameAlt: string;
   image: string;
   quantity: number;
   variantId?: string;
@@ -25,8 +26,9 @@ export type CartItem = {
 };
 
 // v1 stored whole Product objects keyed by product id, which cannot represent
-// a configured line. Old carts are dropped rather than migrated.
-const cartKey = 'onebite-cart-v2';
+// a configured line; v2 stored a single language. Old carts are dropped rather
+// than migrated.
+const cartKey = 'onebite-cart-v3';
 const wishlistKey = 'onebite-wishlist';
 
 function read<T>(key: string, fallback: T): T {
@@ -70,7 +72,7 @@ export function buildCartItem(
     lineId: lineIdFor(product.id, selection),
     slug: product.id,
     name: product.name,
-    nameAr: product.nameAr,
+    nameAlt: product.nameAlt,
     image: product.image,
     quantity,
     variantId: variant?.id,

@@ -30,7 +30,7 @@ onMounted(() => catalog.load());
         >
           <img :src="category.image">
           <div>
-            <span>{{ category.nameAr }}</span>
+            <span class="name-alt" dir="auto">{{ category.nameAlt }}</span>
             <h2>{{ category.name }}</h2>
             <p>{{ category.description }}</p>
             <b>{{ category.productCount }} available products <ArrowRight :size="17"/></b>

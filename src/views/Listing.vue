@@ -47,7 +47,7 @@ const filtered = computed(() => {
   if (query.value) {
     const needle = query.value.toLowerCase();
     list = list.filter(product =>
-      (product.name + product.nameAr + product.description).toLowerCase().includes(needle)
+      (product.name + product.nameAlt + product.description).toLowerCase().includes(needle)
     );
   }
 

@@ -1,21 +1,29 @@
 import {defineStore} from 'pinia';
 import {api, type ApiCategory, type ApiProduct} from '../api/client';
+import {isRtl} from '../i18n';
 import type {Category, Product} from '../data';
 
 // The API speaks integer fils and En/Ar field pairs. The storefront works in
-// KWD with a single display language, so the mapping happens once here rather
-// than in every view.
+// KWD in one language at a time, so the raw records are kept in state and the
+// mapping happens in getters — switching language re-maps what is already
+// loaded instead of refetching.
 const kwd = (value: number) => value / 1000;
 
 const placeholderImage =
   'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=900&h=700&fit=crop&auto=format&q=82';
 
+const primary = (en: string, ar: string) => (isRtl.value ? ar : en);
+const secondary = (en: string, ar: string) => (isRtl.value ? en : ar);
+
 function toProduct(product: ApiProduct): Product {
+  const description = isRtl.value ? product.descriptionAr : product.descriptionEn;
+  const servings = isRtl.value ? product.servingsAr : product.servingsEn;
+
   return {
     id: product.slug,
-    name: product.nameEn,
-    nameAr: product.nameAr,
-    description: product.descriptionEn,
+    name: primary(product.nameEn, product.nameAr),
+    nameAlt: secondary(product.nameEn, product.nameAr),
+    description: description || product.descriptionEn,
     price: kwd(product.priceFils),
     category: product.category.slug,
     image: product.imageUrl || placeholderImage,
@@ -23,18 +31,18 @@ function toProduct(product: ApiProduct): Product {
     best: product.bestSeller,
     seasonal: product.seasonal,
     gift: product.giftable,
-    servings: product.servingsEn ?? undefined,
+    servings: servings ?? undefined,
     allergens: product.allergens.length ? product.allergens : undefined,
     variants: product.variants.map(variant => ({
       id: variant.id,
-      name: variant.nameEn,
+      name: primary(variant.nameEn, variant.nameAr),
       price: kwd(variant.priceFils),
       points: variant.capacityPoints,
       leadDays: variant.leadDays
     })),
     addons: product.addons.map(addon => ({
       id: addon.id,
-      name: addon.nameEn,
+      name: primary(addon.nameEn, addon.nameAr),
       price: kwd(addon.priceFils),
       points: addon.capacityPoints
     })),
@@ -52,9 +60,9 @@ function toProduct(product: ApiProduct): Product {
 function toCategory(category: ApiCategory): Category {
   return {
     id: category.slug,
-    name: category.nameEn,
-    nameAr: category.nameAr,
-    description: category.descriptionEn ?? '',
+    name: primary(category.nameEn, category.nameAr),
+    nameAlt: secondary(category.nameEn, category.nameAr),
+    description: (isRtl.value ? category.descriptionAr : category.descriptionEn) ?? '',
     image: category.imageUrl || placeholderImage,
     productCount: category.productCount
   };
@@ -62,17 +70,22 @@ function toCategory(category: ApiCategory): Category {
 
 export const useCatalogStore = defineStore('catalog', {
   state: () => ({
-    products: [] as Product[],
-    categories: [] as Category[],
+    rawProducts: [] as ApiProduct[],
+    rawCategories: [] as ApiCategory[],
     loading: false,
     error: '',
     loaded: false
   }),
 
   getters: {
-    byId: state => (id: string) => state.products.find(product => product.id === id),
-    inCategory: state => (category: string) =>
-      state.products.filter(product => product.category === category)
+    products: (state): Product[] => state.rawProducts.map(toProduct),
+    categories: (state): Category[] => state.rawCategories.map(toCategory),
+    byId(): (id: string) => Product | undefined {
+      return id => this.products.find(product => product.id === id);
+    },
+    inCategory(): (category: string) => Product[] {
+      return category => this.products.filter(product => product.category === category);
+    }
   },
 
   actions: {
@@ -86,8 +99,8 @@ export const useCatalogStore = defineStore('catalog', {
       this.error = '';
       try {
         const [categories, products] = await Promise.all([api.categories(), api.products()]);
-        this.categories = categories.map(toCategory);
-        this.products = products.items.map(toProduct);
+        this.rawCategories = categories;
+        this.rawProducts = products.items;
         this.loaded = true;
       } catch (reason) {
         this.error =

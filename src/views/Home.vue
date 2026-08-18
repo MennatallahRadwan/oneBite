@@ -73,7 +73,7 @@ const seasonal = computed(() => catalog.products.filter(product => product.seaso
         >
           <img :src="category.image">
           <b>{{ category.name }}</b>
-          <small>{{ category.nameAr }}</small>
+          <small class="name-alt" dir="auto">{{ category.nameAlt }}</small>
         </AppLink>
       </div>
     </div>
