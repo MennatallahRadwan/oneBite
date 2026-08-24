@@ -127,14 +127,11 @@ UPDATE "DeliverySlot" s SET reserved = (
 
 ## Known work remaining
 
-- Customer accounts, addresses, wishlist sync, cancellations, and COD workflows. `Order.userId` is always null and the wishlist is localStorage-only.
-- Promotions and content have no Prisma models at all, so there is nothing to administer yet; they need schema design before any CRUD.
-- The orders tab still only confirms and rejects. `PATCH /owner/orders/:publicNumber` already accepts `fulfilmentStatus` and `codStatus`, but nothing in the UI sets them.
-- The admin UI has not been clicked through in a browser — it type-checks and builds, and every endpoint behind it is covered by `admin-catalog.test.ts` and `admin-operations.test.ts`, but the panels themselves are unverified against a live session.
-- A newly created category stays off the storefront until it holds a published product; `GET /catalog/categories` filters on that. The dashboard shows the product count, but does not explain the rule.
-- Gift details collected at checkout are still not sent to the bakery, and the UI says so.
-- SEO metadata/sitemap (the `/ar` routes exist to be indexed, but nothing emits `hreflang`, per-page titles or a sitemap yet), object storage, CI, and deployment.
-- Several seeded products point at Unsplash photo IDs that resolve to unrelated images (a clock, a pile of sale tags). The image URLs are seed data, not code.
-- Tests run against the **development** database, seeding and mutating it. A dedicated test database would remove the need for serial execution and manual capacity cleanup.
+- 2026-08-21 implementation pass: admin order lifecycle controls now set fulfilment and COD status and can cancel pending orders; gift details are sent with orders and shown in admin; categories explain the zero-product storefront visibility rule; client SEO now sets titles/descriptions/canonical/hreflang and `public/sitemap.xml` exists; `server:test` uses `TEST_DATABASE_URL` via `server/scripts/prepare-test-db.ts` and ran 43 tests in ~2.6s against `onebite_test`; promotions and content blocks now have Prisma models, manual migrations, owner API CRUD and a Marketing admin tab; checkout email now links orders to a customer `User` and stores a customer address, with schema foundations for server-side wishlist rows; pending tracking pages can cancel an order. `DEPLOYMENT.md` documents `CLIENT_ORIGIN`, object storage, CI and release order. Full customer auth/account UI and real checkout promotion application still need design work. In-app browser verification was attempted but the browser connector failed with a tool-side sandbox metadata error, so only build/API tests were verified.
+- Full customer authentication/account UI is still not designed. Checkout email now links orders to users and stores addresses, but there is no customer login/session flow yet and wishlist sync still stays localStorage-only until that exists.
+- Promotions can be administered, but they are not applied to checkout totals yet. That still needs business rules for eligible products, date windows, stacking, and COD receipt text.
+- `server:test` now uses `TEST_DATABASE_URL`, but test files still run serially because they share seeded capacity/slot fixtures. Parallel test execution needs per-file fixture isolation.
+- Admin browser verification is still not completed because the in-app browser connector failed during setup with a tool-side sandbox metadata error. Build and API tests are green.
+- `public/sitemap.xml` uses the placeholder origin `https://onebite.example`; replace it with the real production domain before deployment.
 - `docker-compose.yml` is listed in `.gitignore` yet still tracked. It is the only database setup in the repo, so untracking it would leave a fresh clone unable to start PostgreSQL — decide deliberately whether to track it properly or document setup elsewhere.
-- `CLIENT_ORIGIN` must be set to the real storefront origin in any deployment: CORS now sends credentials, which browsers reject against a wildcard origin.
+- Object storage, CI service configuration, and production deployment are documented in `DEPLOYMENT.md` but not provisioned in an external platform.

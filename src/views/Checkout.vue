@@ -146,7 +146,8 @@ async function submitOrder() {
       selectedSlot: selectedSlot.value,
       customer: {
         name: `${form.value.first} ${form.value.last}`.trim(),
-        phone: form.value.phone
+        phone: form.value.phone,
+        email: form.value.email.trim() || undefined
       },
       address: {
         governorate: form.value.governorate,
@@ -156,6 +157,13 @@ async function submitOrder() {
         building: form.value.building,
         floor: form.value.floor,
         instructions: form.value.instructions
+      },
+      gift: {
+        isGift: form.value.gift,
+        recipientName: form.value.recipient.trim() || undefined,
+        recipientPhone: form.value.recipientPhone.trim() || undefined,
+        message: form.value.message.trim() || undefined,
+        anonymous: form.value.anonymous
       }
     });
     store.clear();
@@ -177,6 +185,11 @@ async function next() {
       return;
     }
     step.value = 2;
+    return;
+  }
+
+  if (form.value.gift && (!form.value.recipient.trim() || !form.value.recipientPhone.trim())) {
+    error.value = t('checkout.error.gift');
     return;
   }
 
@@ -230,6 +243,10 @@ async function next() {
                 <label class="span2">
                   {{ t('checkout.field.phone') }}
                   <input v-model="form.phone" dir="ltr" :placeholder="t('checkout.field.phonePlaceholder')">
+                </label>
+                <label class="span2">
+                  {{ t('checkout.field.email') }} <small>{{ t('checkout.field.emailHint') }}</small>
+                  <input v-model="form.email" type="email" autocomplete="email">
                 </label>
                 <label>
                   {{ t('checkout.field.governorate') }}
@@ -302,6 +319,21 @@ async function next() {
                   <small>{{ t('checkout.gift.notice') }}</small>
                 </span>
               </label>
+              <div v-if="form.gift" class="form-grid gift-fields">
+                <label>{{ t('checkout.gift.recipient') }}<input v-model="form.recipient"></label>
+                <label>
+                  {{ t('checkout.gift.recipientPhone') }}
+                  <input v-model="form.recipientPhone" dir="ltr">
+                </label>
+                <label class="span2">
+                  {{ t('checkout.gift.message') }}
+                  <textarea v-model="form.message" :maxlength="500"></textarea>
+                </label>
+                <label class="span2 toggle-line">
+                  <input v-model="form.anonymous" type="checkbox">
+                  {{ t('checkout.gift.anonymous') }}
+                </label>
+              </div>
               <div class="cod-notice">
                 <Wallet/>
                 <span>

@@ -8,11 +8,13 @@ import ProductsPanel from '../components/admin/ProductsPanel.vue';
 import CategoriesPanel from '../components/admin/CategoriesPanel.vue';
 import DeliveryPanel from '../components/admin/DeliveryPanel.vue';
 import CapacityPanel from '../components/admin/CapacityPanel.vue';
+import MarketingPanel from '../components/admin/MarketingPanel.vue';
 
 const sections = [
   {key: 'orders', label: 'Orders', component: OrdersPanel},
   {key: 'products', label: 'Products', component: ProductsPanel},
   {key: 'categories', label: 'Categories', component: CategoriesPanel},
+  {key: 'marketing', label: 'Marketing', component: MarketingPanel},
   {key: 'delivery', label: 'Delivery', component: DeliveryPanel},
   {key: 'capacity', label: 'Capacity', component: CapacityPanel}
 ] as const;

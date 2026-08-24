@@ -300,6 +300,89 @@ export async function updateAddon(id: string, data: Partial<OptionInput>) {
   return addon;
 }
 
+// ------------------------------------------------------ promotions / content
+
+const promotionShape = {
+  id: true,
+  code: true,
+  titleEn: true,
+  titleAr: true,
+  descriptionEn: true,
+  descriptionAr: true,
+  discountType: true,
+  discountValue: true,
+  startsAt: true,
+  endsAt: true,
+  active: true,
+  createdAt: true,
+  updatedAt: true
+} as const;
+
+export type PromotionInput = {
+  code: string;
+  titleEn: string;
+  titleAr: string;
+  descriptionEn?: string | null;
+  descriptionAr?: string | null;
+  discountType: 'PERCENT' | 'FIXED_FILS';
+  discountValue: number;
+  startsAt?: Date | null;
+  endsAt?: Date | null;
+  active?: boolean;
+};
+
+export const listPromotions = () =>
+  prisma.promotion.findMany({orderBy: [{active: 'desc'}, {createdAt: 'desc'}], select: promotionShape});
+
+export const createPromotion = (data: PromotionInput) =>
+  unique('promotion', () => prisma.promotion.create({data, select: promotionShape}));
+
+export async function updatePromotion(id: string, data: Partial<PromotionInput>) {
+  if (!nothingToChange(data)) {
+    const updated = await unique('promotion', () => prisma.promotion.updateMany({where: {id}, data}));
+    if (updated.count !== 1) throw notFound('Promotion');
+  }
+  const promotion = await prisma.promotion.findUnique({where: {id}, select: promotionShape});
+  if (!promotion) throw notFound('Promotion');
+  return promotion;
+}
+
+const contentBlockShape = {
+  id: true,
+  key: true,
+  titleEn: true,
+  titleAr: true,
+  bodyEn: true,
+  bodyAr: true,
+  active: true,
+  updatedAt: true
+} as const;
+
+export type ContentBlockInput = {
+  key: string;
+  titleEn: string;
+  titleAr: string;
+  bodyEn: string;
+  bodyAr: string;
+  active?: boolean;
+};
+
+export const listContentBlocks = () =>
+  prisma.contentBlock.findMany({orderBy: [{active: 'desc'}, {key: 'asc'}], select: contentBlockShape});
+
+export const createContentBlock = (data: ContentBlockInput) =>
+  unique('content block', () => prisma.contentBlock.create({data, select: contentBlockShape}));
+
+export async function updateContentBlock(id: string, data: Partial<ContentBlockInput>) {
+  if (!nothingToChange(data)) {
+    const updated = await unique('content block', () => prisma.contentBlock.updateMany({where: {id}, data}));
+    if (updated.count !== 1) throw notFound('Content block');
+  }
+  const block = await prisma.contentBlock.findUnique({where: {id}, select: contentBlockShape});
+  if (!block) throw notFound('Content block');
+  return block;
+}
+
 // ------------------------------------------------------------ delivery areas
 
 const areaShape = {id: true, nameEn: true, nameAr: true, feeFils: true, active: true} as const;

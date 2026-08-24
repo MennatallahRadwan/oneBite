@@ -1,5 +1,6 @@
 import {createRouter, createWebHistory, type RouteRecordRaw} from 'vue-router';
 import {applyDocumentLocale, locale, localeFromPath, localePath, storedLocale} from '../i18n';
+import {applySeo} from '../seo';
 import Home from '../views/Home.vue';
 import Listing from '../views/Listing.vue';
 import Categories from '../views/Categories.vue';
@@ -63,6 +64,9 @@ router.beforeEach(to => {
   return true;
 });
 
-router.afterEach(() => applyDocumentLocale());
+router.afterEach(to => {
+  applyDocumentLocale();
+  applySeo(to);
+});
 
 export default router;

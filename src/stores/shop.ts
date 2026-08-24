@@ -1,5 +1,6 @@
 import {defineStore} from 'pinia';
 import type {Product} from '../data';
+import {useCustomerStore} from './customer';
 
 export type CartSelection = {
   variantId?: string;
@@ -124,6 +125,20 @@ export const useShopStore = defineStore('shop', {
       this.wishlist = this.wishlist.includes(id)
         ? this.wishlist.filter(value => value !== id)
         : [...this.wishlist, id];
+      this.persist();
+      const customer = useCustomerStore();
+      if (customer.signedIn) {
+        customer.syncWishlist(this.wishlist)
+          .then(wishlist => {
+            this.wishlist = wishlist;
+            this.persist();
+          })
+          .catch(() => {});
+      }
+    },
+
+    setWishlist(ids: string[]) {
+      this.wishlist = [...new Set(ids)];
       this.persist();
     },
 

@@ -12,6 +12,7 @@ const route = useRoute();
 const order = ref<TrackingOrder | null>(null);
 const error = ref('');
 const loading = ref(true);
+const cancelling = ref(false);
 
 const stages = [
   {key: 'CONFIRMED', icon: Check},
@@ -50,6 +51,20 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+async function cancelOrder() {
+  if (!window.confirm(t('tracking.cancelConfirm'))) return;
+  cancelling.value = true;
+  error.value = '';
+  try {
+    await api.cancelOrder(String(route.params.id));
+    order.value = await api.tracking(String(route.params.id));
+  } catch (reason) {
+    error.value = errorMessage(reason, 'error.order');
+  } finally {
+    cancelling.value = false;
+  }
+}
 </script>
 
 <template>
@@ -68,6 +83,14 @@ onMounted(async () => {
         <div v-if="order.status === 'PENDING_CONFIRMATION'" class="availability-notice">
           <Clock3/> {{ t('tracking.pendingNotice') }}
         </div>
+        <button
+          v-if="order.status === 'PENDING_CONFIRMATION'"
+          class="btn secondary"
+          :disabled="cancelling"
+          @click="cancelOrder"
+        >
+          {{ cancelling ? t('tracking.cancelWait') : t('tracking.cancel') }}
+        </button>
         <div
           v-else-if="order.status === 'REJECTED' || order.status === 'CANCELLED'"
           class="availability-notice"
