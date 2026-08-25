@@ -39,12 +39,12 @@ callers instead of applied per client.
 There is no Prisma migrations directory — schema changes live as SQL scripts in
 `server/prisma/manual-migrations/`, because `prisma migrate` fails locally on
 Windows with a schema engine error. Production therefore syncs with
-`npm run deploy:db` (`prisma db push`), which is declared as the blueprint's
-`preDeployCommand`.
+`npm run deploy:db` (`prisma db push`).
 
-**Render runs `preDeployCommand` on paid instances only.** On the free plan, run
-it yourself against the database's external connection string before the first
-deploy and after every schema change:
+**This is a manual step.** Render does not support `preDeployCommand` on free
+instances, so the blueprint does not declare one. Run it yourself against the
+database's external connection string before the first deploy and after every
+schema change:
 
 ```bash
 DATABASE_URL="<external connection string>" npm run deploy:db

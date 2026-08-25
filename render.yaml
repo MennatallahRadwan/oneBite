@@ -22,10 +22,11 @@ services:
     buildCommand: npm ci --include=dev && npm run prisma:generate && npm run build
     startCommand: npm run server:start
 
-    # Paid instances only. On the free plan this is ignored — run
-    # `npm run deploy:db` yourself against DATABASE_URL before the first deploy
-    # and after any schema change.
-    preDeployCommand: npm run deploy:db
+    # No preDeployCommand: Render does not support it on free instances. Run
+    # `npm run deploy:db` yourself against the database's external connection
+    # string before the first deploy and after any schema change. Add
+    # `preDeployCommand: npm run deploy:db` here if this service moves to a
+    # paid plan.
 
     healthCheckPath: /api/v1/health
 
