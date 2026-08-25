@@ -136,5 +136,4 @@ UPDATE "DeliverySlot" s SET reserved = (
 - SEO metadata/sitemap (the `/ar` routes exist to be indexed, but nothing emits `hreflang`, per-page titles or a sitemap yet), object storage, CI, and deployment.
 - Several seeded products point at Unsplash photo IDs that resolve to unrelated images (a clock, a pile of sale tags). The image URLs are seed data, not code.
 - Tests run against the **development** database, seeding and mutating it. A dedicated test database would remove the need for serial execution and manual capacity cleanup.
-- `docker-compose.yml` is listed in `.gitignore` yet still tracked. It is the only database setup in the repo, so untracking it would leave a fresh clone unable to start PostgreSQL — decide deliberately whether to track it properly or document setup elsewhere.
 - `CLIENT_ORIGIN` must be set to the real storefront origin in any deployment: CORS now sends credentials, which browsers reject against a wildcard origin.
