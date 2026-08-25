@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "build": "vue-tsc -b && vite build && npm run sitemap:origin",
     "preview": "vite preview",
     "server:dev": "tsx watch server/src/index.ts",
     "server:start": "tsx server/src/index.ts",
@@ -15,7 +15,9 @@
     "prisma:generate": "prisma generate --schema server/prisma/schema.prisma",
     "prisma:migrate": "prisma migrate dev --schema server/prisma/schema.prisma",
     "prisma:seed": "tsx server/prisma/seed.ts",
-    "owner:bootstrap": "tsx server/scripts/bootstrap-owner.ts"
+    "owner:bootstrap": "tsx server/scripts/bootstrap-owner.ts",
+    "sitemap:origin": "tsx scripts/apply-site-origin.ts",
+    "deploy:db": "prisma db push --schema server/prisma/schema.prisma --skip-generate"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",

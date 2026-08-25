@@ -1,0 +1,60 @@
+# Render blueprint. One web service serves both the Express API and the built
+# storefront, because owner and customer sessions are sameSite:'lax' cookies —
+# splitting the SPA onto its own origin would make the browser drop them and
+# every login would fail. See DEPLOYMENT.md.
+
+databases:
+  - name: onebite-db
+    databaseName: onebite
+    user: onebite
+    plan: free # Free PostgreSQL is deleted after 30 days. Move to a paid plan before real orders exist.
+
+services:
+  - type: web
+    name: onebite
+    runtime: node
+    plan: free
+    region: frankfurt # Closest of Render's regions to Kuwait.
+
+    # --include=dev is required: NODE_ENV=production below would otherwise make
+    # npm ci skip devDependencies, and the build needs prisma and vue-tsc while
+    # the start command needs tsx.
+    buildCommand: npm ci --include=dev && npm run prisma:generate && npm run build
+    startCommand: npm run server:start
+
+    # Paid instances only. On the free plan this is ignored — run
+    # `npm run deploy:db` yourself against DATABASE_URL before the first deploy
+    # and after any schema change.
+    preDeployCommand: npm run deploy:db
+
+    healthCheckPath: /api/v1/health
+
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: onebite-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+
+      # Set once the service has its URL (or a custom domain). CLIENT_ORIGIN
+      # must be the exact storefront origin — never "*" — because CORS runs
+      # with credentials. SITE_ORIGIN is substituted into dist/sitemap.xml at
+      # build time, so changing it needs a rebuild, not just a restart.
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: SITE_ORIGIN
+        sync: false
+
+      # Owner dashboard credentials. See ADMIN_SETUP.md for generating the TOTP
+      # secret and the 32-byte encryption key. Never commit these.
+      - key: OWNER_EMAIL
+        sync: false
+      - key: OWNER_PASSWORD
+        sync: false
+      - key: OWNER_TOTP_SECRET
+        sync: false
+      - key: OWNER_TOTP_ENCRYPTION_KEY
+        sync: false

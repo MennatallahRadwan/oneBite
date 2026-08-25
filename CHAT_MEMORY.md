@@ -125,6 +125,18 @@ UPDATE "DeliverySlot" s SET reserved = (
      AND o."deliveryWindow" = s."windowStart" || '–' || s."windowEnd");
 ```
 
+## Deployment
+
+- Target is **Render**: one web service plus one managed PostgreSQL, described by `render.yaml`. `DEPLOYMENT.md` is the runbook.
+- **One service serves both halves.** Sessions are `sameSite: 'lax'` cookies, so a browser drops them on cross-site requests — an SPA on its own origin would make login appear to succeed and then fail. `createApp()` serves `dist/` with an SPA fallback in production; the client calls `/api/v1` on its own origin. `SERVE_CLIENT=false` opts out, but splitting also needs `sameSite: 'none'; secure` and `VITE_API_URL`.
+- `trust proxy` is on unless `TRUST_PROXY=false`. Without it every request carries the proxy's address and the per-route rate limits become global rather than per client.
+- Helmet's CSP is customised to `img-src 'self' data: https:`. The default `'self'` blanked the catalog once this process started serving HTML, because product images are external URLs in the database.
+- Unmatched `/api` paths get a JSON 404 rather than falling through to the SPA shell.
+- No Prisma migrations directory exists, so production syncs with `npm run deploy:db` (`prisma db push`), declared as the blueprint's `preDeployCommand`. **Render only runs that on paid instances** — on the free plan run it by hand against the external `DATABASE_URL`.
+- `SITE_ORIGIN` is substituted into `dist/sitemap.xml` by `scripts/apply-site-origin.ts` during `npm run build`, so changing it needs a rebuild, not a restart. `src/seo.ts` needs no equivalent; it reads `window.location.origin`.
+- `npm ci --include=dev` in the build command is deliberate: `NODE_ENV=production` would otherwise skip devDependencies, and the build needs `prisma`/`vue-tsc` while the start command needs `tsx`.
+- `server/scripts/prepare-test-db.ts` had to pass `shell` on Windows. Node refuses to spawn the `npx.cmd` shim without one, and the failure reports `status: null`, which the old truthiness guard read as success — so `prisma db push` silently never ran and the seed failed with `P2021`.
+
 ## Known work remaining
 
 - 2026-08-21 implementation pass: admin order lifecycle controls now set fulfilment and COD status and can cancel pending orders; gift details are sent with orders and shown in admin; categories explain the zero-product storefront visibility rule; client SEO now sets titles/descriptions/canonical/hreflang and `public/sitemap.xml` exists; `server:test` uses `TEST_DATABASE_URL` via `server/scripts/prepare-test-db.ts` and ran 43 tests in ~2.6s against `onebite_test`; promotions and content blocks now have Prisma models, manual migrations, owner API CRUD and a Marketing admin tab; checkout email now links orders to a customer `User` and stores a customer address, with schema foundations for server-side wishlist rows; pending tracking pages can cancel an order. `DEPLOYMENT.md` documents `CLIENT_ORIGIN`, object storage, CI and release order. Full customer auth/account UI and real checkout promotion application still need design work. In-app browser verification was attempted but the browser connector failed with a tool-side sandbox metadata error, so only build/API tests were verified.

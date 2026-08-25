@@ -3,6 +3,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import pinoHttp from 'pino-http';
 import {randomUUID} from 'node:crypto';
+import {existsSync} from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {z} from 'zod';
 import {prisma} from './db.js';
 import {calculateAvailability} from './availability-service.js';
@@ -111,11 +114,36 @@ const publicProductShape = {
 // at checkout, without loosening the match to something guessable.
 const normalizePhone = (value: string) => value.replace(/\D/g, '').slice(-8);
 
+// The built storefront, when this process is also serving it. Deploying the SPA
+// to its own origin would put the session cookies cross-site, and they are
+// sameSite:'lax' — the browser would drop them and every login would fail — so
+// the one-service layout is the supported one and this is how it is found.
+const clientDir = path.resolve(fileURLToPath(new URL('../../dist', import.meta.url)));
+const clientIndex = path.join(clientDir, 'index.html');
+const servesClient = () => process.env.SERVE_CLIENT !== 'false' && existsSync(clientIndex);
+
 export function createApp() {
   const app = express();
 
+  // Render (and every other managed host) terminates TLS at a proxy. Without
+  // this, req.ip is the proxy's address for everyone, so the per-route rate
+  // limits would be shared by all callers rather than applied per client.
+  if (process.env.TRUST_PROXY !== 'false') app.set('trust proxy', 1);
+
   app.use(pinoHttp());
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          // Product and category images are external URLs held in the database,
+          // so the default img-src 'self' would blank out the whole catalog
+          // once this process serves the HTML too.
+          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+          'img-src': ["'self'", 'data:', 'https:']
+        }
+      }
+    })
+  );
   // credentials:true is what lets the owner session cookie travel to an API on
   // another origin; without it owner auth only works through the dev proxy.
   // It requires a concrete origin — the wildcard is rejected by browsers here.
@@ -332,6 +360,25 @@ export function createApp() {
     } catch (error) {
       next(error);
     }
+  });
+
+  if (servesClient()) {
+    // Hashed asset filenames can be cached hard; index.html never can, or a
+    // visitor keeps the old build's asset references after a deploy.
+    app.use(express.static(clientDir, {index: false, maxAge: '1y'}));
+
+    app.get(/^(?!\/api\/).*/, (_req, res, next) => {
+      res.sendFile(clientIndex, {headers: {'Cache-Control': 'no-cache'}}, error => {
+        if (error) next(error);
+      });
+    });
+  }
+
+  // An unmatched /api route must answer as the API, not fall through to the
+  // SPA shell — a 200 of HTML where JSON was expected is far harder to read
+  // than a 404.
+  app.use('/api', (_req, res) => {
+    res.status(404).json({error: {code: 'NOT_FOUND', message: 'Unknown endpoint'}});
   });
 
   app.use((error: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
