@@ -141,7 +141,10 @@ async function setArchived(category: AdminCategory, archived: boolean) {
           <b>{{ category.nameEn }}</b>
           <small dir="auto">{{ category.nameAr }} · {{ category.slug }}</small>
         </span>
-        <span class="admin-cell">{{ category.productCount }} products</span>
+        <span class="admin-cell">
+          {{ category.productCount }} products
+          <small v-if="!category.productCount">hidden until it has a published product</small>
+        </span>
         <span class="admin-cell">order {{ category.sortOrder }}</span>
         <em v-if="category.archivedAt" class="admin-flag muted">archived</em>
         <em v-else class="admin-flag live">live</em>

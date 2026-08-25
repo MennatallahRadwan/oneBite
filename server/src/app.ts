@@ -10,8 +10,9 @@ import {CartError, cartSubtotalFils, type CartLine} from './cart-service.js';
 import {createReservedOrder, OrderConflictError} from './order-service.js';
 import {claimQuote, createQuote} from './quote-service.js';
 import {ownerRouter} from './owner-router.js';
+import {customerRouter} from './customer-router.js';
 import {AdminError} from './admin-service.js';
-import {OrderLifecycleError} from './order-lifecycle-service.js';
+import {OrderLifecycleError, updateOrderLifecycle} from './order-lifecycle-service.js';
 import {authLimiter, validationError} from './http.js';
 
 const cartItem = z.object({
@@ -32,7 +33,8 @@ const order = z.object({
   selectedSlot: z.object({date: z.string(), window: z.string()}),
   customer: z.object({
     name: z.string().min(2),
-    phone: z.string().min(6)
+    phone: z.string().min(6),
+    email: z.string().email().optional()
   }),
   address: z.object({
     governorate: z.string().min(1),
@@ -42,7 +44,25 @@ const order = z.object({
     building: z.string().min(1),
     floor: z.string().max(100).optional(),
     instructions: z.string().max(500).optional()
-  })
+  }),
+  gift: z
+    .object({
+      isGift: z.boolean(),
+      recipientName: z.string().max(120).optional(),
+      recipientPhone: z.string().max(40).optional(),
+      message: z.string().max(500).optional(),
+      anonymous: z.boolean().optional()
+    })
+    .optional()
+    .superRefine((gift, ctx) => {
+      if (!gift?.isGift) return;
+      if (!gift.recipientName?.trim()) {
+        ctx.addIssue({code: 'custom', message: 'Recipient name is required', path: ['recipientName']});
+      }
+      if (!gift.recipientPhone?.trim()) {
+        ctx.addIssue({code: 'custom', message: 'Recipient phone is required', path: ['recipientPhone']});
+      }
+    })
 });
 
 const trackingLookup = z.object({
@@ -109,6 +129,7 @@ export function createApp() {
   app.get('/api/v1/health', (_, res) => res.json({ok: true}));
 
   app.use('/api/v1/owner', ownerRouter());
+  app.use('/api/v1/customer', customerRouter());
 
   app.get('/api/v1/catalog/categories', async (_req, res, next) => {
     try {
@@ -240,7 +261,8 @@ export function createApp() {
         area: quote.areaName,
         selectedSlot: parsed.data.selectedSlot,
         customer: parsed.data.customer,
-        address: parsed.data.address
+        address: parsed.data.address,
+        gift: parsed.data.gift
       });
 
       res.status(201).json({
@@ -276,6 +298,19 @@ export function createApp() {
       });
       if (!found) return res.status(404).json({error: {code: 'NOT_FOUND', message: 'Tracking record not found'}});
       res.json(found);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post('/api/v1/tracking/:token/cancel', authLimiter(), async (req, res, next) => {
+    try {
+      const found = await prisma.order.findUnique({
+        where: {trackingToken: req.params.token},
+        select: {publicNumber: true}
+      });
+      if (!found) return res.status(404).json({error: {code: 'NOT_FOUND', message: 'Tracking record not found'}});
+      res.json(await updateOrderLifecycle(found.publicNumber, {status: 'CANCELLED'}));
     } catch (error) {
       next(error);
     }

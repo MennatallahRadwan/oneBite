@@ -66,3 +66,67 @@
 .admin-inline input{width:88px;margin-top:0}
 .admin-window{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .admin-window input{margin-top:0}
+.form-grid textarea{display:block;width:100%;min-height:96px;margin-top:7px;border:1px solid var(--border);background:var(--alt);padding:12px;border-radius:10px;outline:0;resize:vertical}
+.account-auth{max-width:640px;margin:0 auto}
+.account-auth .account-panel+.account-panel{margin-top:18px}
+.guest-panel .button-row{margin:18px 0 0;flex-wrap:wrap}
+.account-dashboard{display:grid;gap:22px}
+.account-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:22px;align-items:start}
+.account-grid>.span2{grid-column:span 2}
+.account-panel small{color:var(--muted)}
+@media(max-width:900px){.account-grid{grid-template-columns:1fr}.account-grid>.span2{grid-column:auto}}
+@media(max-width:640px){
+  body{padding-bottom:78px}
+  .announcement{display:none}
+  .header{position:static}
+  .nav{height:68px}
+  .brand b{font-size:12px}
+  .brand small{font-size:9px}
+  .actions{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:60;
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:0;
+    padding:8px max(10px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-right));
+    background:rgba(250,250,248,.98);
+    border-top:1px solid var(--border);
+    box-shadow:0 -12px 30px rgba(15,51,48,.10);
+    backdrop-filter:blur(12px)
+  }
+  .actions>a,.actions>button{
+    min-width:0;
+    width:100%;
+    height:44px;
+    display:grid!important;
+    place-items:center;
+    border-radius:12px
+  }
+  .actions>a:nth-child(1),.actions>a:nth-child(2){display:grid!important}
+  .locale-toggle{border:0;padding:0}
+  .locale-toggle span{display:none}
+  .menu{display:grid!important}
+  .navlinks{
+    top:auto;
+    bottom:69px;
+    padding:16px;
+    border-top:1px solid var(--border);
+    border-bottom:0;
+    box-shadow:0 -12px 30px rgba(15,51,48,.10)
+  }
+  .account-panel{padding:20px}
+  .order-row{align-items:flex-start;gap:12px}
+  .order-row>strong{margin-inline-start:auto}
+  .account-dashboard .admin-head{align-items:flex-start}
+}
+.gift-fields{margin-top:16px}
+.toggle-line{display:flex;align-items:center;gap:9px}
+.toggle-line input{width:auto;margin:0}
+.gift-note{display:flex!important;align-items:center;gap:5px;margin-top:4px;color:var(--teal)!important}
+.admin-mini-select{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
+.admin-mini-select svg{color:var(--teal);flex:none}
+.admin-mini-select select{border:1px solid var(--border);background:var(--alt);border-radius:9px;padding:7px 9px;max-width:170px}
+.admin-mini-select select:disabled{opacity:.55}

@@ -7,7 +7,7 @@ type OrderRequest = {
   items: CartLine[];
   area: string;
   selectedSlot: {date: string; window: string};
-  customer: {name: string; phone: string};
+  customer: {name: string; phone: string; email?: string};
   address: {
     governorate: string;
     area: string;
@@ -16,6 +16,13 @@ type OrderRequest = {
     building: string;
     floor?: string;
     instructions?: string;
+  };
+  gift?: {
+    isGift: boolean;
+    recipientName?: string;
+    recipientPhone?: string;
+    message?: string;
+    anonymous?: boolean;
   };
 };
 
@@ -92,10 +99,45 @@ async function reserveOnce(input: OrderRequest) {
     });
     if (productionUpdated.count !== 1 || slotUpdated.count !== 1) throw new OrderConflictError(slotUnavailable);
 
+    const customerEmail = input.customer.email?.trim().toLowerCase();
+    const existingUser = customerEmail
+      ? await tx.user.findUnique({where: {email: customerEmail}, select: {id: true, role: true}})
+      : null;
+    const user = customerEmail
+      ? existingUser?.role === 'CUSTOMER'
+        ? await tx.user.update({
+            where: {id: existingUser.id},
+            data: {name: input.customer.name},
+            select: {id: true}
+          })
+        : existingUser
+          ? null
+          : await tx.user.create({
+              data: {email: customerEmail, name: input.customer.name},
+              select: {id: true}
+            })
+      : null;
+
+    if (user) {
+      await tx.customerAddress.create({
+        data: {
+          userId: user.id,
+          governorate: input.address.governorate,
+          areaName: area.nameEn,
+          block: input.address.block,
+          street: input.address.street,
+          building: input.address.building,
+          floorOrApartment: input.address.floor || null,
+          deliveryInstructions: input.address.instructions || null
+        }
+      });
+    }
+
     return tx.order.create({
       data: {
         publicNumber: `OB-${randomBytes(4).toString('hex').toUpperCase()}`,
         trackingToken: randomBytes(24).toString('base64url'),
+        userId: user?.id ?? null,
         customerName: input.customer.name,
         customerPhone: input.customer.phone,
         governorate: input.address.governorate,
@@ -105,6 +147,11 @@ async function reserveOnce(input: OrderRequest) {
         building: input.address.building,
         floorOrApartment: input.address.floor || null,
         deliveryInstructions: input.address.instructions || null,
+        isGift: input.gift?.isGift ?? false,
+        giftRecipientName: input.gift?.isGift ? input.gift.recipientName || null : null,
+        giftRecipientPhone: input.gift?.isGift ? input.gift.recipientPhone || null : null,
+        giftMessage: input.gift?.isGift ? input.gift.message || null : null,
+        giftAnonymous: input.gift?.isGift ? input.gift.anonymous ?? false : false,
         deliveryWindow: input.selectedSlot.window,
         subtotalFils: subtotal,
         deliveryFeeFils: area.feeFils,

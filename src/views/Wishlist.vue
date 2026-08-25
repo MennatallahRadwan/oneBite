@@ -3,15 +3,20 @@ import {computed, onMounted} from 'vue';
 import {Heart} from 'lucide-vue-next';
 import {useCatalogStore} from '../stores/catalog';
 import {useShopStore} from '../stores/shop';
+import {useCustomerStore} from '../stores/customer';
 import {t} from '../i18n';
 import ProductCard from '../components/ProductCard.vue';
 import PageHero from '../components/PageHero.vue';
 import AppLink from '../components/AppLink.vue';
 
 const store = useShopStore();
+const customer = useCustomerStore();
 const catalog = useCatalogStore();
 
-onMounted(() => catalog.load());
+onMounted(async () => {
+  await Promise.all([catalog.load(), customer.load()]);
+  if (customer.account?.wishlist.length) store.setWishlist(customer.account.wishlist);
+});
 
 const list = computed(() =>
   catalog.products.filter(product => store.wishlist.includes(product.id))

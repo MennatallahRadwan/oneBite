@@ -32,6 +32,10 @@ enum CodStatus {
   REFUNDED
   WAIVED
 }
+enum PromotionDiscountType {
+  PERCENT
+  FIXED_FILS
+}
 
 model User {
   id String @id @default(cuid())
@@ -46,6 +50,8 @@ model User {
   orders Order[]
   sessions Session[]
   mfaChallenges MfaChallenge[]
+  addresses CustomerAddress[]
+  wishlistItems WishlistItem[]
 }
 model Session {
   id String @id @default(cuid())
@@ -121,7 +127,34 @@ model Product {
   cakeTextPoints Int?
   variants ProductVariant[]
   addons ProductAddon[]
+  wishlistItems WishlistItem[]
   archivedAt DateTime?
+}
+model CustomerAddress {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label String @default("Default")
+  governorate String
+  areaName String
+  block String
+  street String
+  building String
+  floorOrApartment String?
+  deliveryInstructions String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId])
+}
+model WishlistItem {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@unique([userId, productId])
+  @@index([userId])
 }
 model ProductVariant {
   id String @id @default(cuid())
@@ -187,6 +220,11 @@ model Order {
   building String
   floorOrApartment String?
   deliveryInstructions String?
+  isGift Boolean @default(false)
+  giftRecipientName String?
+  giftRecipientPhone String?
+  giftMessage String?
+  giftAnonymous Boolean @default(false)
   deliveryWindow String
   subtotalFils Int
   discountFils Int @default(0)
@@ -223,4 +261,29 @@ model CapacityReservation {
   points Int
   active Boolean @default(true)
   createdAt DateTime @default(now())
+}
+model Promotion {
+  id String @id @default(cuid())
+  code String @unique
+  titleEn String
+  titleAr String
+  descriptionEn String?
+  descriptionAr String?
+  discountType PromotionDiscountType
+  discountValue Int
+  startsAt DateTime?
+  endsAt DateTime?
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model ContentBlock {
+  id String @id @default(cuid())
+  key String @unique
+  titleEn String
+  titleAr String
+  bodyEn String
+  bodyAr String
+  active Boolean @default(true)
+  updatedAt DateTime @updatedAt
 }

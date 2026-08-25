@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://onebite.example/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://onebite.example/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://onebite.example/ar"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://onebite.example/"/>
+  </url>
+  <url>
+    <loc>https://onebite.example/shop</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://onebite.example/shop"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://onebite.example/ar/shop"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://onebite.example/shop"/>
+  </url>
+  <url>
+    <loc>https://onebite.example/categories</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://onebite.example/categories"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://onebite.example/ar/categories"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://onebite.example/categories"/>
+  </url>
+  <url>
+    <loc>https://onebite.example/best-sellers</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://onebite.example/best-sellers"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://onebite.example/ar/best-sellers"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://onebite.example/best-sellers"/>
+  </url>
+  <url>
+    <loc>https://onebite.example/seasonal</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://onebite.example/seasonal"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://onebite.example/ar/seasonal"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://onebite.example/seasonal"/>
+  </url>
+  <url>
+    <loc>https://onebite.example/gift-boxes</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://onebite.example/gift-boxes"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://onebite.example/ar/gift-boxes"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://onebite.example/gift-boxes"/>
+  </url>
+  <url>
+    <loc>https://onebite.example/about</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://onebite.example/about"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://onebite.example/ar/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://onebite.example/about"/>
+  </url>
+  <url>
+    <loc>https://onebite.example/faq</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://onebite.example/faq"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://onebite.example/ar/faq"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://onebite.example/faq"/>
+  </url>
+  <url>
+    <loc>https://onebite.example/contact</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://onebite.example/contact"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://onebite.example/ar/contact"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://onebite.example/contact"/>
+  </url>
+</urlset>

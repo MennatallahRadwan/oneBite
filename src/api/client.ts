@@ -22,7 +22,7 @@ export type Quote = {
 export type CreateOrder = {
   quoteId: string;
   selectedSlot: Slot;
-  customer: {name: string; phone: string};
+  customer: {name: string; phone: string; email?: string};
   address: {
     governorate: string;
     area: string;
@@ -31,6 +31,13 @@ export type CreateOrder = {
     building: string;
     floor?: string;
     instructions?: string;
+  };
+  gift?: {
+    isGift: boolean;
+    recipientName?: string;
+    recipientPhone?: string;
+    message?: string;
+    anonymous?: boolean;
   };
 };
 
@@ -63,6 +70,8 @@ export type TrackingOrder = {
   createdAt: string;
 };
 
+export type CancelledOrder = {publicNumber: string; status: OrderStatus};
+
 export type OwnerOrder = {
   publicNumber: string;
   status: string;
@@ -74,6 +83,11 @@ export type OwnerOrder = {
   deliveryWindow: string;
   totalFils: number;
   createdAt: string;
+  isGift: boolean;
+  giftRecipientName: string | null;
+  giftRecipientPhone: string | null;
+  giftMessage: string | null;
+  giftAnonymous: boolean;
 };
 
 export type OwnerOrderUpdate = {
@@ -84,6 +98,51 @@ export type OwnerOrderUpdate = {
 };
 
 export type Owner = {id: string; name: string; email: string | null};
+export type Customer = {id: string; name: string; email: string | null};
+
+export type CustomerOrder = {
+  publicNumber: string;
+  trackingToken: string;
+  status: OrderStatus;
+  fulfilmentStatus: FulfilmentStatus;
+  codStatus: CodStatus;
+  deliveryWindow: string;
+  areaName: string;
+  totalFils: number;
+  createdAt: string;
+};
+
+export type CustomerAddress = {
+  id: string;
+  label: string;
+  governorate: string;
+  areaName: string;
+  block: string;
+  street: string;
+  building: string;
+  floorOrApartment: string | null;
+  deliveryInstructions: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CustomerAddressInput = {
+  label: string;
+  governorate: string;
+  areaName: string;
+  block: string;
+  street: string;
+  building: string;
+  floorOrApartment?: string;
+  deliveryInstructions?: string;
+};
+
+export type CustomerAccount = {
+  customer: Customer;
+  orders: CustomerOrder[];
+  addresses: CustomerAddress[];
+  wishlist: string[];
+};
 
 const base = import.meta.env.VITE_API_URL || '/api/v1';
 
@@ -256,6 +315,33 @@ export type CapacityDay = {
   usedPoints: number;
 };
 
+export type AdminPromotion = {
+  id: string;
+  code: string;
+  titleEn: string;
+  titleAr: string;
+  descriptionEn: string | null;
+  descriptionAr: string | null;
+  discountType: 'PERCENT' | 'FIXED_FILS';
+  discountValue: number;
+  startsAt: string | null;
+  endsAt: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminContentBlock = {
+  id: string;
+  key: string;
+  titleEn: string;
+  titleAr: string;
+  bodyEn: string;
+  bodyAr: string;
+  active: boolean;
+  updatedAt: string;
+};
+
 export type OptionInput = {
   nameEn: string;
   nameAr: string;
@@ -297,8 +383,29 @@ export const api = {
 
   tracking: (token: string) => request<TrackingOrder>(`/tracking/${encodeURIComponent(token)}`),
 
+  cancelOrder: (token: string) =>
+    post<CancelledOrder>(`/tracking/${encodeURIComponent(token)}/cancel`, {}),
+
   trackingLookup: (orderNumber: string, phone: string) =>
     post<{trackingToken: string}>('/tracking/lookup', {orderNumber, phone}),
+
+  customer: {
+    me: () => request<CustomerAccount>('/customer/me'),
+    register: (name: string, email: string, password: string) =>
+      post<{customer: Customer}>('/customer/auth/register', {name, email, password}),
+    login: (email: string, password: string) =>
+      post<{customer: Customer}>('/customer/auth/login', {email, password}),
+    logout: () => request<void>('/customer/auth/logout', {method: 'POST'}),
+    syncWishlist: (slugs: string[]) => request<{wishlist: string[]}>('/customer/wishlist', {
+      method: 'PUT',
+      body: JSON.stringify({slugs})
+    }),
+    createAddress: (address: CustomerAddressInput) =>
+      post<CustomerAddress>('/customer/addresses', address),
+    deleteAddress: (id: string) => request<void>(`/customer/addresses/${id}`, {method: 'DELETE'}),
+    cancelOrder: (publicNumber: string) =>
+      post<CancelledOrder>(`/customer/orders/${encodeURIComponent(publicNumber)}/cancel`, {})
+  },
 
   owner: {
     me: () => request<Owner>('/owner/me'),
@@ -329,6 +436,18 @@ export const api = {
       post<AdminOption>(`/owner/products/${productId}/addons`, data),
     updateAddon: (id: string, data: Partial<OptionInput>) =>
       patch<AdminOption>(`/owner/addons/${id}`, data),
+
+    promotions: () => request<{items: AdminPromotion[]}>('/owner/promotions'),
+    createPromotion: (data: Omit<AdminPromotion, 'id' | 'createdAt' | 'updatedAt'>) =>
+      post<AdminPromotion>('/owner/promotions', data),
+    updatePromotion: (id: string, data: Partial<Omit<AdminPromotion, 'id' | 'createdAt' | 'updatedAt'>>) =>
+      patch<AdminPromotion>(`/owner/promotions/${id}`, data),
+
+    contentBlocks: () => request<{items: AdminContentBlock[]}>('/owner/content-blocks'),
+    createContentBlock: (data: Omit<AdminContentBlock, 'id' | 'updatedAt'>) =>
+      post<AdminContentBlock>('/owner/content-blocks', data),
+    updateContentBlock: (id: string, data: Partial<Omit<AdminContentBlock, 'id' | 'updatedAt'>>) =>
+      patch<AdminContentBlock>(`/owner/content-blocks/${id}`, data),
 
     areas: () => request<{items: AdminArea[]}>('/owner/delivery/areas'),
     createArea: (data: Omit<AdminArea, 'id'>) => post<AdminArea>('/owner/delivery/areas', data),

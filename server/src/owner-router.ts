@@ -92,6 +92,32 @@ const option = z.object({
 
 const optionUpdate = option.partial();
 
+const promotion = z.object({
+  code: z.string().min(2).max(40).regex(/^[A-Z0-9_-]+$/, 'Use uppercase letters, numbers, underscores or hyphens'),
+  titleEn: text(160),
+  titleAr: text(160),
+  descriptionEn: optionalText(800),
+  descriptionAr: optionalText(800),
+  discountType: z.enum(['PERCENT', 'FIXED_FILS']),
+  discountValue: z.number().int().min(1).max(1_000_000),
+  startsAt: z.coerce.date().nullable().optional(),
+  endsAt: z.coerce.date().nullable().optional(),
+  active: z.boolean().optional()
+});
+
+const promotionUpdate = promotion.partial();
+
+const contentBlock = z.object({
+  key: z.string().min(2).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase words separated by single hyphens'),
+  titleEn: text(160),
+  titleAr: text(160),
+  bodyEn: text(5000),
+  bodyAr: text(5000),
+  active: z.boolean().optional()
+});
+
+const contentBlockUpdate = contentBlock.partial();
+
 const area = z.object({
   nameEn: text(120),
   nameAr: text(120),
@@ -210,7 +236,12 @@ export function ownerRouter() {
         areaName: true,
         deliveryWindow: true,
         totalFils: true,
-        createdAt: true
+        createdAt: true,
+        isGift: true,
+        giftRecipientName: true,
+        giftRecipientPhone: true,
+        giftMessage: true,
+        giftAnonymous: true
       }
     });
     res.json({items});
@@ -284,6 +315,40 @@ export function ownerRouter() {
     const body = parse(optionUpdate, req, res, 'Invalid add-on');
     if (!body) return;
     res.json(await admin.updateAddon(req.params.id, body));
+  });
+
+  // ------------------------------------------------------ promotions/content
+
+  router.get('/promotions', async (_req, res) => {
+    res.json({items: await admin.listPromotions()});
+  });
+
+  router.post('/promotions', async (req, res) => {
+    const body = parse(promotion, req, res, 'Invalid promotion');
+    if (!body) return;
+    res.status(201).json(await admin.createPromotion(body));
+  });
+
+  router.patch('/promotions/:id', async (req, res) => {
+    const body = parse(promotionUpdate, req, res, 'Invalid promotion');
+    if (!body) return;
+    res.json(await admin.updatePromotion(req.params.id, body));
+  });
+
+  router.get('/content-blocks', async (_req, res) => {
+    res.json({items: await admin.listContentBlocks()});
+  });
+
+  router.post('/content-blocks', async (req, res) => {
+    const body = parse(contentBlock, req, res, 'Invalid content block');
+    if (!body) return;
+    res.status(201).json(await admin.createContentBlock(body));
+  });
+
+  router.patch('/content-blocks/:id', async (req, res) => {
+    const body = parse(contentBlockUpdate, req, res, 'Invalid content block');
+    if (!body) return;
+    res.json(await admin.updateContentBlock(req.params.id, body));
   });
 
   // ---------------------------------------------------------- delivery areas
