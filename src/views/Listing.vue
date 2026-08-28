@@ -27,6 +27,17 @@ const subtitle = computed(() => t(`listing.${modeKey.value}.subtitle` as Message
 
 const categories = computed(() => catalog.categories);
 
+const featuredProductOrder: Record<string, string[]> = {
+  'butter-cookies': ['biscoff-tiramisu', 'date-tahini-cookies', 'filled-cookies', 'lotus-cheesecake', 'red-velvet-cake']
+};
+
+const featuredRank = (categoryId: string, productId: string) => {
+  const order = featuredProductOrder[categoryId];
+  if (!order) return Number.MAX_SAFE_INTEGER;
+  const index = order.indexOf(productId);
+  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+};
+
 const filtered = computed(() => {
   let list = [...catalog.products];
 
@@ -42,6 +53,13 @@ const filtered = computed(() => {
     );
   }
 
+  if (sort.value === 'featured' && category.value !== 'all') {
+    list.sort(
+      (a, b) =>
+        featuredRank(category.value, a.id) - featuredRank(category.value, b.id) ||
+        a.name.localeCompare(b.name)
+    );
+  }
   if (sort.value === 'low') list.sort((a, b) => a.price - b.price);
   if (sort.value === 'high') list.sort((a, b) => b.price - a.price);
 

@@ -350,7 +350,7 @@ export const en = {
   'contact.heading': 'Get in touch',
   'contact.hours': 'Our customer care team is available daily from 9 AM to 10 PM.',
   'contact.phoneLabel': 'WhatsApp & Phone',
-  'contact.emailLabel': 'Email',
+  'contact.instagramLabel': 'Instagram',
   'contact.bakeryLabel': 'Bakery',
   'contact.form.name': 'Name',
   'contact.form.namePlaceholder': 'Your name',

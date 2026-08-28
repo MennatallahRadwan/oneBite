@@ -12,8 +12,21 @@ Complete Vue 3 customer-facing frontend converted from the supplied Figma Make /
 ## Run
 ```bash
 npm install
+docker compose up -d postgres
+npm run db:setup
+npm run server:dev
+```
+
+In another terminal:
+
+```bash
 npm run dev
 ```
+
+The catalog, delivery areas, slots, and capacity are seeded into PostgreSQL from
+`server/prisma/seed.ts`. Update that seed whenever you change the shared product
+data, then commit it so everyone who pulls the project gets the same database
+state after running `npm run db:setup`.
 
 ## Build
 ```bash

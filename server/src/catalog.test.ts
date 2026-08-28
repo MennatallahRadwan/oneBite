@@ -45,4 +45,21 @@ describe('catalog API', () => {
       expect.objectContaining({slug: productSlug, priceFils: 1000})
     );
   });
+
+  it('orders kahk products in the preferred storefront sequence', async () => {
+    const response = await request(createApp()).get('/api/v1/catalog/products');
+    expect(response.status).toBe(200);
+
+    const kahkSlugs = response.body.items
+      .filter((item: {category?: {slug?: string}}) => item.category?.slug === 'kahk')
+      .map((item: {slug: string}) => item.slug);
+
+    expect(kahkSlugs).toEqual([
+      'chocolate-truffle-cake',
+      'vanilla-bean-cake',
+      'pistachio-rose-kunafa',
+      'kahk-filled-dates',
+      'kahk-filled-walnuts'
+    ]);
+  });
 });

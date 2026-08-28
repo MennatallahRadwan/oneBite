@@ -1,8 +1,20 @@
 import 'dotenv/config';
 import {prisma} from '../src/db.js';
 
-const img = (id: string, w = 900, h = 700) =>
-  `https://images.unsplash.com/photo-${id}?w=${w}&h=${h}&fit=crop&auto=format&q=82`;
+const productImages = {
+  largeBox: '/images/products/bteforlarge.png',
+  filledMalban: '/images/products/filledmalban.png',
+  filledMalbanCookies: '/images/products/cookiesfilledmalban.png',
+  filledWalnuts: '/images/products/filledgoz.png',
+  filledDates: '/images/products/filledates.png',
+  plainCookies: '/images/products/plaincookies.png',
+  sugarCookies: '/images/products/sugarcookes.png',
+  regularBox: '/images/products/bteforregular.png',
+  vanillaBtefor: '/images/products/vanillabtefor.png',
+  chocoBtefor: '/images/products/chocobtefor.png',
+  filledCookies: '/images/products/filledcookies.png',
+  giftBox: '/images/products/giftBox.png'
+};
 
 // Prices are written in KWD to stay readable against the storefront, and
 // converted to the integer fils the schema stores.
@@ -35,69 +47,40 @@ type SeedProduct = {
 
 const categories = [
   {
-    slug: 'cakes',
-    nameEn: 'Cakes',
-    nameAr: 'الكيكات',
-    descriptionEn: 'Layered cakes crafted for every occasion',
-    descriptionAr: 'كيكات متعددة الطبقات لكل مناسبة',
-    imageUrl: img('1578985545062-69928b1d9587')
+    slug: 'kahk',
+    nameEn: 'Kahk',
+    nameAr: 'كحك',
+    descriptionEn: 'Buttery, soft, crumbly cookies for every occasion',
+    descriptionAr: 'كوكيز زبدية طرية وهشة تناسب كل المناسبات',
+    imageUrl: productImages.plainCookies
   },
   {
-    slug: 'pastries',
-    nameEn: 'Pastries',
-    nameAr: 'المعجنات',
-    descriptionEn: 'Buttery baked goods fresh each morning',
-    descriptionAr: 'مخبوزات بالزبدة طازجة كل صباح',
-    imageUrl: img('1555507036-ab1f4038808a')
+    slug: 'butter-cookies',
+    nameEn: 'Butter Cookies',
+    nameAr: 'بسكويت الزبدة',
+    descriptionEn: 'Classic butter cookies in plain, sugar and filled styles',
+    descriptionAr: 'بسكويت زبدة كلاسيكي سادة وبالسكر ومحشو',
+    imageUrl: productImages.regularBox
   },
   {
-    slug: 'cheesecakes',
-    nameEn: 'Cheesecakes',
-    nameAr: 'تشيز كيك',
-    descriptionEn: 'Creamy, indulgent in every flavor',
-    descriptionAr: 'كريمية وغنية بكل النكهات',
-    imageUrl: img('1565958011703-44f9829ba187')
-  },
-  {
-    slug: 'oriental',
-    nameEn: 'Oriental Sweets',
-    nameAr: 'حلويات شرقية',
-    descriptionEn: 'Traditional Gulf sweets, modern twist',
-    descriptionAr: 'حلويات خليجية تقليدية بلمسة عصرية',
-    imageUrl: img('1603532648955-039310d9ed75')
-  },
-  {
-    slug: 'tarts',
-    nameEn: 'Tarts & Slices',
-    nameAr: 'تارت وشرائح',
-    descriptionEn: 'Elegant tarts with seasonal fruits',
-    descriptionAr: 'تارت أنيقة بالفواكه الموسمية',
-    imageUrl: img('1464305795204-6f5bbfc7fb81')
-  },
-  {
-    slug: 'cookies',
-    nameEn: 'Cookies',
-    nameAr: 'بسكويت',
-    descriptionEn: 'Handcrafted cookies baked fresh daily',
-    descriptionAr: 'بسكويت مصنوع يدويًا ويخبز طازجًا يوميًا',
-    imageUrl: img('1499636136210-6f4ee915583e')
-  },
-  {
-    slug: 'giftboxes',
-    nameEn: 'Gift Boxes',
-    nameAr: 'صناديق الهدايا',
-    descriptionEn: 'Curated boxes for gifting occasions',
-    descriptionAr: 'صناديق مختارة لمناسبات الإهداء',
-    imageUrl: img('1549465220-1a8b9238cd48')
-  },
-  {
-    slug: 'seasonal',
-    nameEn: 'Seasonal',
-    nameAr: 'موسمي',
-    descriptionEn: 'Limited edition seasonal collections',
-    descriptionAr: 'مجموعات موسمية بإصدار محدود',
-    imageUrl: img('1558326567-98ae2405596b')
+    slug: 'gift-box',
+    nameEn: 'Gift Box',
+    nameAr: 'صندوق هدايا',
+    descriptionEn: 'Elegant boxed selections ready for gifting',
+    descriptionAr: 'تشكيلات أنيقة في صناديق جاهزة للإهداء',
+    imageUrl: productImages.giftBox
   }
+];
+
+const retiredCategorySlugs = [
+  'cakes',
+  'pastries',
+  'cheesecakes',
+  'oriental',
+  'tarts',
+  'cookies',
+  'giftboxes',
+  'seasonal'
 ];
 
 const cakeOptions = {
@@ -112,14 +95,13 @@ const cakeOptions = {
 const products: SeedProduct[] = [
   {
     slug: 'chocolate-truffle-cake',
-    category: 'cakes',
-    nameEn: 'Chocolate Truffle Cake',
-    nameAr: 'كيكة تروفيل الشوكولاتة',
-    descriptionEn:
-      'Rich dark chocolate layers with silky truffle ganache, Belgian chocolate curls and edible gold leaf.',
-    descriptionAr: 'طبقات شوكولاتة داكنة غنية مع غاناش الترافل الناعم ورقائق الشوكولاتة البلجيكية.',
-    price: 8.5,
-    image: img('1578985545062-69928b1d9587'),
+    category: 'kahk',
+    nameEn: 'Kahk with Malban',
+    nameAr: 'كحك بالملبن',
+    descriptionEn: 'Soft, buttery kahk filled with sweet malban for a rich traditional taste.',
+    descriptionAr: 'كحك ناعم وهش محشو بالملبن الحلو بطعم شرقي أصيل.',
+    price: 12,
+    image: productImages.filledMalban,
     tags: ['Signature'],
     tagsAr: ['مميز'],
     servingsEn: '8–10 servings',
@@ -130,13 +112,13 @@ const products: SeedProduct[] = [
   },
   {
     slug: 'lotus-cheesecake',
-    category: 'cheesecakes',
-    nameEn: 'Lotus Cheesecake',
-    nameAr: 'تشيز كيك اللوتس',
-    descriptionEn: 'Creamy New York-style cheesecake on a buttery Lotus biscuit base.',
-    descriptionAr: 'تشيز كيك كريمي على طريقة نيويورك على قاعدة بسكويت لوتس بالزبدة.',
-    price: 6.5,
-    image: img('1565958011703-44f9829ba187'),
+    category: 'butter-cookies',
+    nameEn: 'Cookies Regular Box',
+    nameAr: 'علبة بتيفور متوسطة',
+    descriptionEn: 'A delicious selection of fresh cookies in a convenient regular-size box.',
+    descriptionAr: 'تشكيلة شهية من البتيفور الطازج في علبة بحجم مناسب.',
+    price: 7,
+    image: productImages.regularBox,
     tags: ['Signature'],
     tagsAr: ['مميز'],
     servingsEn: '8–10 servings',
@@ -147,14 +129,13 @@ const products: SeedProduct[] = [
   },
   {
     slug: 'pistachio-rose-kunafa',
-    category: 'oriental',
-    nameEn: 'Pistachio Rose Kunafa',
-    nameAr: 'كنافة الفستق والورد',
-    descriptionEn:
-      'Fine kunafa threads with pistachio cream, rose water syrup and crushed pistachios.',
-    descriptionAr: 'خيوط كنافة ناعمة مع كريمة الفستق وشراب ماء الورد والفستق المجروش.',
-    price: 5,
-    image: img('1603532648955-039310d9ed75'),
+    category: 'kahk',
+    nameEn: 'Plain Kahk',
+    nameAr: 'كحك سادة',
+    descriptionEn: 'Classic buttery kahk with a soft, crumbly texture and traditional flavor.',
+    descriptionAr: 'كحك سادة بطعم زبدي أصيل وقوام ناعم وهش.',
+    price: 10,
+    image: productImages.filledMalbanCookies,
     tags: ['New'],
     tagsAr: ['جديد'],
     servingsEn: '6–8 servings',
@@ -167,13 +148,13 @@ const products: SeedProduct[] = [
   },
   {
     slug: 'vanilla-bean-cake',
-    category: 'cakes',
-    nameEn: 'Vanilla Bean Cake',
-    nameAr: 'كيكة الفانيلا',
-    descriptionEn: 'Light vanilla sponge with Madagascar vanilla bean cream and fresh berries.',
-    descriptionAr: 'إسفنج فانيلا خفيف مع كريمة فانيلا مدغشقر والتوت الطازج.',
-    price: 7,
-    image: img('1542826438-bd32f3d81bbc'),
+    category: 'kahk',
+    nameEn: 'Kahk with Sugar',
+    nameAr: 'كحك بالسكر',
+    descriptionEn: 'Traditional kahk topped with powdered sugar for a sweet, delicate finish.',
+    descriptionAr: 'كحك تقليدي مغطى بالسكر البودرة لمذاق حلو وخفيف.',
+    price: 10.5,
+    image: productImages.sugarCookies,
     tags: ['Signature'],
     tagsAr: ['مميز'],
     servingsEn: '8–10 servings',
@@ -182,50 +163,71 @@ const products: SeedProduct[] = [
     ...cakeOptions
   },
   {
+    slug: 'kahk-filled-walnuts',
+    category: 'kahk',
+    nameEn: 'Kahk with Walnuts',
+    nameAr: 'كحك بالجوز',
+    descriptionEn: 'Soft, buttery kahk filled with crunchy walnuts for a rich nutty flavor.',
+    descriptionAr: 'كحك ناعم وهش محشو بعين الجمل المقرمش لمذاق غني ولذيذ.',
+    price: 14,
+    image: productImages.filledWalnuts,
+    tags: ['New'],
+    tagsAr: ['جديد'],
+    servingsEn: '8–10 servings',
+    servingsAr: '٨–١٠ حصص',
+    allergens: ['Gluten', 'Dairy', 'Eggs', 'Nuts'],
+    variants: [
+      {id: 'box', nameEn: 'Sharing box', nameAr: 'صندوق للمشاركة', price: 0, points: 6, leadDays: 2}
+    ]
+  },
+  {
+    slug: 'kahk-filled-dates',
+    category: 'kahk',
+    nameEn: 'Kahk with Dates',
+    nameAr: 'كحك بالعجوة',
+    descriptionEn: 'Traditional kahk filled with sweet dates for a warm, classic flavor.',
+    descriptionAr: 'كحك تقليدي محشو بالعجوة الحلوة لمذاق دافئ وكلاسيكي.',
+    price: 11,
+    image: productImages.filledDates,
+    tags: ['New'],
+    tagsAr: ['جديد'],
+    servingsEn: '8–10 servings',
+    servingsAr: '٨–١٠ حصص',
+    allergens: ['Gluten', 'Dairy', 'Eggs'],
+    variants: [
+      {id: 'box', nameEn: 'Sharing box', nameAr: 'صندوق للمشاركة', price: 0, points: 6, leadDays: 2}
+    ]
+  },
+  {
     slug: 'caramel-croissant',
-    category: 'pastries',
-    nameEn: 'Salted Caramel Croissant',
-    nameAr: 'كرواسون الكراميل المملح',
-    descriptionEn: 'Buttery laminated croissant filled with house-made salted caramel cream.',
-    descriptionAr: 'كرواسون بالزبدة محشو بكريمة الكراميل المملح المصنوعة في المخبز.',
-    price: 1.5,
-    image: img('1555507036-ab1f4038808a'),
+    category: 'gift-box',
+    nameEn: 'Gift Box',
+    nameAr: 'علبة الهدايا',
+    descriptionEn: 'An elegant box filled with a delicious assortment of cookies, perfect for gifting.',
+    descriptionAr: 'علبة أنيقة تضم تشكيلة شهية من البتيفور، مثالية للهدايا.',
+    price: 15,
+    image: productImages.giftBox,
     tags: ['Fresh daily'],
     tagsAr: ['طازج يوميًا'],
     servingsEn: '1 piece',
     servingsAr: 'قطعة واحدة',
     allergens: ['Gluten', 'Dairy', 'Eggs'],
     bestSeller: true,
+    giftable: true,
     variants: [
       {id: 'single', nameEn: 'Single', nameAr: 'قطعة', price: 0, points: 1, leadDays: 1},
       {id: 'box6', nameEn: 'Box of 6', nameAr: 'علبة ٦ قطع', price: 7, points: 5, leadDays: 2}
     ]
   },
   {
-    slug: 'cinnamon-roll',
-    category: 'pastries',
-    nameEn: 'Classic Cinnamon Roll',
-    nameAr: 'رول القرفة',
-    descriptionEn: 'Soft cinnamon rolls with signature cream cheese frosting.',
-    descriptionAr: 'رول قرفة طري مع كريمة الجبن المميزة.',
-    price: 2,
-    image: img('1616198814651-e71f960c3180'),
-    tags: ['Fresh daily'],
-    tagsAr: ['طازج يوميًا'],
-    servingsEn: '1 piece',
-    servingsAr: 'قطعة واحدة',
-    allergens: ['Gluten', 'Dairy', 'Eggs'],
-    variants: [{id: 'single', nameEn: 'Single', nameAr: 'قطعة', price: 0, points: 1, leadDays: 1}]
-  },
-  {
     slug: 'red-velvet-cake',
-    category: 'cakes',
-    nameEn: 'Red Velvet Dream',
-    nameAr: 'كيكة المخمل الأحمر',
-    descriptionEn: 'Classic red velvet layers with velvety cream cheese frosting.',
-    descriptionAr: 'طبقات المخمل الأحمر الكلاسيكية مع كريمة الجبن المخملية.',
-    price: 8,
-    image: img('1563729784474-d77dbb933a9e'),
+    category: 'butter-cookies',
+    nameEn: 'Cookies Large Box',
+    nameAr: 'علبة بتيفور كبيرة',
+    descriptionEn: 'A generous selection of fresh cookies, perfect for sharing with family and friends.',
+    descriptionAr: 'تشكيلة كبيرة من البتيفور الطازج، مثالية للمشاركة مع العائلة والأصدقاء.',
+    price: 9,
+    image: productImages.largeBox,
     tags: ['Classic'],
     tagsAr: ['كلاسيكي'],
     servingsEn: '8–10 servings',
@@ -234,31 +236,14 @@ const products: SeedProduct[] = [
     ...cakeOptions
   },
   {
-    slug: 'mango-passion-tart',
-    category: 'tarts',
-    nameEn: 'Mango Passion Tart',
-    nameAr: 'تارت المانجو والباشن',
-    descriptionEn: 'Buttery pastry shell with passionfruit curd and fresh mango.',
-    descriptionAr: 'قاعدة عجين بالزبدة مع كريمة الباشن فروت والمانجو الطازج.',
-    price: 4.5,
-    image: img('1464305795204-6f5bbfc7fb81'),
-    tags: ['Seasonal'],
-    tagsAr: ['موسمي'],
-    servingsEn: '6–8 servings',
-    servingsAr: '٦–٨ حصص',
-    allergens: ['Gluten', 'Dairy', 'Eggs'],
-    seasonal: true,
-    variants: [{id: 'tart', nameEn: 'One tart', nameAr: 'تارت واحدة', price: 0, points: 5, leadDays: 2}]
-  },
-  {
     slug: 'biscoff-tiramisu',
-    category: 'cakes',
-    nameEn: 'Biscoff Tiramisu',
-    nameAr: 'تيراميسو البسكويت',
-    descriptionEn: 'Coffee-soaked ladyfingers with mascarpone cream and Biscoff crumble.',
-    descriptionAr: 'أصابع السيدة المنقوعة بالقهوة مع كريمة الماسكربوني وفتات البسكوف.',
-    price: 6,
-    image: img('1571877227200-a0d98ea607e9'),
+    category: 'butter-cookies',
+    nameEn: 'Vanilla Cookies',
+    nameAr: 'بتيفور بالفانيلا',
+    descriptionEn: 'Light, buttery vanilla cookies with a soft, delicate flavor.',
+    descriptionAr: 'بتيفور فانيليا خفيف وهش بطعم زبدي ناعم ولذيذ.',
+    price: 5.5,
+    image: productImages.vanillaBtefor,
     tags: ['New'],
     tagsAr: ['جديد'],
     servingsEn: '6–8 servings',
@@ -268,13 +253,13 @@ const products: SeedProduct[] = [
   },
   {
     slug: 'date-tahini-cookies',
-    category: 'cookies',
-    nameEn: 'Date & Tahini Cookies',
-    nameAr: 'بسكويت التمر والطحينة',
-    descriptionEn: 'Medjool dates, tahini and sesame in a soft-baked cookie.',
-    descriptionAr: 'تمر المجدول والطحينة والسمسم في بسكويت طري.',
-    price: 3.5,
-    image: img('1499636136210-6f4ee915583e'),
+    category: 'butter-cookies',
+    nameEn: 'Chocolate Cookies',
+    nameAr: 'بتيفور بالشوكولاتة',
+    descriptionEn: 'Rich chocolate cookies with a soft texture and deep cocoa flavor.',
+    descriptionAr: 'بتيفور شوكولاتة غني بقوام ناعم ونكهة كاكاو مميزة.',
+    price: 5.5,
+    image: productImages.chocoBtefor,
     tags: ['Signature'],
     tagsAr: ['مميز'],
     servingsEn: '12 cookies',
@@ -284,66 +269,29 @@ const products: SeedProduct[] = [
     variants: [{id: 'box', nameEn: 'Box of 12', nameAr: 'علبة ١٢ قطعة', price: 0, points: 3, leadDays: 1}]
   },
   {
-    slug: 'matcha-white-chocolate',
-    category: 'cakes',
-    nameEn: 'Matcha White Choc Cake',
-    nameAr: 'كيكة الماتشا والشوكولاتة البيضاء',
-    descriptionEn: 'Ceremonial matcha layers with white chocolate ganache.',
-    descriptionAr: 'طبقات ماتشا احتفالية مع غاناش الشوكولاتة البيضاء.',
-    price: 7.5,
-    image: img('1488477181946-6428a0291777'),
-    tags: ['Specialty'],
-    tagsAr: ['تخصصي'],
-    servingsEn: '8–10 servings',
-    servingsAr: '٨–١٠ حصص',
-    allergens: ['Gluten', 'Dairy', 'Eggs'],
-    ...cakeOptions
-  },
-  {
-    slug: 'eid-gift-box',
-    category: 'giftboxes',
-    nameEn: 'Eid Celebration Box',
-    nameAr: 'صندوق هدايا العيد',
-    descriptionEn: 'Signature pastries, macarons and sweets in an elegant keepsake box.',
-    descriptionAr: 'معجنات وماكرون وحلويات مميزة في صندوق أنيق للاحتفاظ به.',
-    price: 18,
-    image: img('1549465220-1a8b9238cd48'),
-    tags: ['Seasonal'],
-    tagsAr: ['موسمي'],
-    servingsEn: '15–20 pieces',
-    servingsAr: '١٥–٢٠ قطعة',
-    allergens: ['Gluten', 'Dairy', 'Nuts'],
-    seasonal: true,
-    giftable: true,
-    variants: [
-      {id: 'box', nameEn: 'Celebration box', nameAr: 'صندوق الاحتفال', price: 0, points: 10, leadDays: 3}
-    ],
-    addons: [
-      {id: 'gift-wrap', nameEn: 'Gift packaging', nameAr: 'تغليف الهدايا', price: 0.75, points: 0}
-    ]
-  },
-  {
-    slug: 'classic-gift-box',
-    category: 'giftboxes',
-    nameEn: 'Classic Gift Box',
-    nameAr: 'صندوق الهدايا الكلاسيكي',
-    descriptionEn: 'A refined selection of One Bite favorites, ready to gift.',
-    descriptionAr: 'تشكيلة مختارة من أفضل منتجات ون بايت، جاهزة للإهداء.',
-    price: 14,
-    image: img('1509440159596-0249088772ff'),
-    tags: ['Gift'],
-    tagsAr: ['هدية'],
-    servingsEn: '12–16 pieces',
-    servingsAr: '١٢–١٦ قطعة',
-    allergens: ['Gluten', 'Dairy', 'Nuts'],
-    giftable: true,
-    variants: [
-      {id: 'box', nameEn: 'Classic box', nameAr: 'الصندوق الكلاسيكي', price: 0, points: 8, leadDays: 2}
-    ],
-    addons: [
-      {id: 'gift-wrap', nameEn: 'Gift packaging', nameAr: 'تغليف الهدايا', price: 0.75, points: 0}
-    ]
+    slug: 'filled-cookies',
+    category: 'butter-cookies',
+    nameEn: 'Filled Cookies',
+    nameAr: 'بتيفور محشو',
+    descriptionEn: 'Buttery sandwich cookies filled with smooth, sweet centers in a mixed assortment.',
+    descriptionAr: 'بتيفور زبدي محشو بحشوات ناعمة وحلوة ضمن تشكيلة متنوعة.',
+    price: 7.25,
+    image: productImages.filledCookies,
+    tags: ['New'],
+    tagsAr: ['جديد'],
+    servingsEn: '12 cookies',
+    servingsAr: '١٢ قطعة',
+    allergens: ['Gluten', 'Dairy', 'Eggs', 'Nuts'],
+    variants: [{id: 'box', nameEn: 'Box of 12', nameAr: 'علبة ١٢ قطعة', price: 0, points: 4, leadDays: 1}]
   }
+];
+
+const retiredProductSlugs = [
+  'cinnamon-roll',
+  'classic-gift-box',
+  'eid-gift-box',
+  'mango-passion-tart',
+  'matcha-white-chocolate'
 ];
 
 const deliveryAreas = [
@@ -375,12 +323,10 @@ async function seedCategories() {
     });
   }
 
-  // The original seed used a 'gift-boxes' slug that the storefront never
-  // linked to; 'giftboxes' replaces it. Archive rather than delete so any
-  // product still pointing at it keeps its foreign key.
-  await prisma.category.updateMany({
-    where: {slug: 'gift-boxes', products: {none: {}}},
-    data: {archivedAt: new Date()}
+  // These slugs belonged to the original prototype catalog. Delete them when
+  // they have no products so admin views do not keep showing dummy categories.
+  await prisma.category.deleteMany({
+    where: {slug: {in: retiredCategorySlugs}, products: {none: {}}}
   });
 }
 
@@ -429,6 +375,19 @@ async function seedProducts() {
     });
 
     await seedOptions(saved.id, product);
+  }
+
+  const retiredProducts = await prisma.product.findMany({
+    where: {slug: {in: retiredProductSlugs}},
+    select: {id: true}
+  });
+  const retiredProductIds = retiredProducts.map(product => product.id);
+
+  if (retiredProductIds.length) {
+    await prisma.productAddon.deleteMany({where: {productId: {in: retiredProductIds}}});
+    await prisma.productVariant.deleteMany({where: {productId: {in: retiredProductIds}}});
+    await prisma.wishlistItem.deleteMany({where: {productId: {in: retiredProductIds}}});
+    await prisma.product.deleteMany({where: {id: {in: retiredProductIds}}});
   }
 }
 
