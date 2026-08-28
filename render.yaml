@@ -7,7 +7,8 @@ databases:
   - name: onebite-db
     databaseName: onebite
     user: onebite
-    plan: free # Free PostgreSQL is deleted after 30 days. Move to a paid plan before real orders exist.
+    plan: free # Free PostgreSQL expires (becomes inaccessible) on day 30, deleted on day 44.
+    # Upgrading during that 14-day grace period keeps the data. Upgrade before day 30 for zero downtime.
 
 services:
   - type: web

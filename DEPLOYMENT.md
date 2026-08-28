@@ -3,6 +3,10 @@
 Target: **Render**, one web service plus one managed PostgreSQL instance,
 described by [`render.yaml`](render.yaml).
 
+For Railway instead, see [RAILWAY.md](RAILWAY.md) — same single-service shape,
+configured by [`railway.json`](railway.json). The rationale below about origins,
+cookies and schema changes applies to both platforms.
+
 ## Why one service, not two
 
 Owner and customer sessions are cookies set with `sameSite: 'lax'`
@@ -71,8 +75,12 @@ output rather than forcing it.
 ## Known Constraints
 
 - **Free plans sleep.** A free Render web service spins down after inactivity;
-  the first request afterwards takes ~50s. Free PostgreSQL is **deleted after
-  30 days**. Move both to paid plans before taking real orders.
+  the first request afterwards takes ~50s.
+- **Free PostgreSQL expires on day 30 and is deleted on day 44.** At 30 days the
+  database becomes *inaccessible* — the storefront breaks — and a 14-day grace
+  period begins during which upgrading to a paid instance restores it with the
+  data intact. After the grace period Render deletes the database and its data
+  permanently. Upgrade before day 30 to avoid downtime entirely.
 - **The capacity horizon is finite.** The seed fills 30 days. Once it lapses,
   checkout finds no available slots until the owner extends capacity from the
   dashboard.
