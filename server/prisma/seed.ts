@@ -15,6 +15,7 @@ const productImages = {
   regularBox: '/images/products/bteforregular.png',
   vanillaBtefor: '/images/products/vanillabtefor.png',
   chocoBtefor: '/images/products/chocobtefor.png',
+  filledCookies: '/images/products/filledcookies.png',
   giftBox: '/images/products/giftBox.png'
 };
 
@@ -260,6 +261,22 @@ const products: SeedProduct[] = [
     allergens: ['Gluten', 'Sesame', 'Nuts'],
     bestSeller: true,
     variants: [{id: 'box', nameEn: 'Box of 12', nameAr: 'علبة ١٢ قطعة', price: 0, points: 3, leadDays: 1}]
+  },
+  {
+    slug: 'filled-cookies',
+    category: 'butter-cookies',
+    nameEn: 'Filled Cookies',
+    nameAr: 'بتيفور محشو',
+    descriptionEn: 'Buttery sandwich cookies filled with smooth, sweet centers in a mixed assortment.',
+    descriptionAr: 'بتيفور زبدي محشو بحشوات ناعمة وحلوة ضمن تشكيلة متنوعة.',
+    price: 7.25,
+    image: productImages.filledCookies,
+    tags: ['New'],
+    tagsAr: ['جديد'],
+    servingsEn: '12 cookies',
+    servingsAr: '١٢ قطعة',
+    allergens: ['Gluten', 'Dairy', 'Eggs', 'Nuts'],
+    variants: [{id: 'box', nameEn: 'Box of 12', nameAr: 'علبة ١٢ قطعة', price: 0, points: 4, leadDays: 1}]
   }
 ];
 
