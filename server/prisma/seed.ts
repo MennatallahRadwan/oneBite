@@ -6,7 +6,10 @@ const img = (id: string, w = 900, h = 700) =>
 
 const productImages = {
   largeBox: '/images/products/bteforlarge.png',
+  filledMalban: '/images/products/filledmalban.png',
   filledMalbanCookies: '/images/products/cookiesfilledmalban.png',
+  filledWalnuts: '/images/products/filledgoz.png',
+  filledDates: '/images/products/filledates.png',
   plainCookies: '/images/products/plaincookies.png',
   sugarCookies: '/images/products/sugarcookes.png',
   regularBox: '/images/products/bteforregular.png',
@@ -91,7 +94,7 @@ const products: SeedProduct[] = [
     descriptionEn: 'Soft, buttery kahk filled with sweet malban for a rich traditional taste.',
     descriptionAr: 'كحك ناعم وهش محشو بالملبن الحلو بطعم شرقي أصيل.',
     price: 12,
-    image: productImages.plainCookies,
+    image: productImages.filledMalban,
     tags: ['Signature'],
     tagsAr: ['مميز'],
     servingsEn: '8–10 servings',
@@ -151,6 +154,42 @@ const products: SeedProduct[] = [
     servingsAr: '٨–١٠ حصص',
     allergens: ['Gluten', 'Dairy', 'Eggs'],
     ...cakeOptions
+  },
+  {
+    slug: 'kahk-filled-walnuts',
+    category: 'kahk',
+    nameEn: 'Kahk with Walnuts',
+    nameAr: 'كحك بالجوز',
+    descriptionEn: 'Soft, buttery kahk filled with crunchy walnuts for a rich nutty flavor.',
+    descriptionAr: 'كحك ناعم وهش محشو بعين الجمل المقرمش لمذاق غني ولذيذ.',
+    price: 14,
+    image: productImages.filledWalnuts,
+    tags: ['New'],
+    tagsAr: ['جديد'],
+    servingsEn: '8–10 servings',
+    servingsAr: '٨–١٠ حصص',
+    allergens: ['Gluten', 'Dairy', 'Eggs', 'Nuts'],
+    variants: [
+      {id: 'box', nameEn: 'Sharing box', nameAr: 'صندوق للمشاركة', price: 0, points: 6, leadDays: 2}
+    ]
+  },
+  {
+    slug: 'kahk-filled-dates',
+    category: 'kahk',
+    nameEn: 'Kahk with Dates',
+    nameAr: 'كحك بالعجوة',
+    descriptionEn: 'Traditional kahk filled with sweet dates for a warm, classic flavor.',
+    descriptionAr: 'كحك تقليدي محشو بالعجوة الحلوة لمذاق دافئ وكلاسيكي.',
+    price: 11,
+    image: productImages.filledDates,
+    tags: ['New'],
+    tagsAr: ['جديد'],
+    servingsEn: '8–10 servings',
+    servingsAr: '٨–١٠ حصص',
+    allergens: ['Gluten', 'Dairy', 'Eggs'],
+    variants: [
+      {id: 'box', nameEn: 'Sharing box', nameAr: 'صندوق للمشاركة', price: 0, points: 6, leadDays: 2}
+    ]
   },
   {
     slug: 'caramel-croissant',

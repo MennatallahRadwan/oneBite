@@ -75,6 +75,28 @@ const trackingLookup = z.object({
 
 const publicProduct = {published: true, active: true, archivedAt: null};
 
+const kahkProductOrder = new Map([
+  ['chocolate-truffle-cake', 0],
+  ['vanilla-bean-cake', 1],
+  ['pistachio-rose-kunafa', 2],
+  ['kahk-filled-dates', 3],
+  ['kahk-filled-walnuts', 4]
+]);
+
+const sortCatalogProducts = (items: Array<{slug: string; nameEn: string; category?: {slug?: string}}>) =>
+  [...items].sort((left, right) => {
+    const leftOrder = left.category?.slug === 'kahk' ? kahkProductOrder.get(left.slug) ?? Number.MAX_SAFE_INTEGER : null;
+    const rightOrder = right.category?.slug === 'kahk' ? kahkProductOrder.get(right.slug) ?? Number.MAX_SAFE_INTEGER : null;
+
+    if (leftOrder !== null || rightOrder !== null) {
+      if (leftOrder === null) return 1;
+      if (rightOrder === null) return -1;
+      return leftOrder - rightOrder;
+    }
+
+    return left.nameEn.localeCompare(right.nameEn);
+  });
+
 const optionFields = {id: true, nameEn: true, nameAr: true, priceFils: true, capacityPoints: true};
 
 // The catalog is small enough that returning options with the list saves the
@@ -186,10 +208,9 @@ export function createApp() {
     try {
       const items = await prisma.product.findMany({
         where: publicProduct,
-        orderBy: {nameEn: 'asc'},
         select: publicProductShape
       });
-      res.json({items});
+      res.json({items: sortCatalogProducts(items)});
     } catch (error) {
       next(error);
     }

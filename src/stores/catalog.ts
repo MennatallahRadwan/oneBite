@@ -15,6 +15,29 @@ const placeholderImage =
 const primary = (en: string, ar: string) => (isRtl.value ? ar : en);
 const secondary = (en: string, ar: string) => (isRtl.value ? en : ar);
 
+const kahkProductOrder = new Map([
+  ['chocolate-truffle-cake', 0],
+  ['vanilla-bean-cake', 1],
+  ['pistachio-rose-kunafa', 2],
+  ['kahk-filled-dates', 3],
+  ['kahk-filled-walnuts', 4]
+]);
+
+function sortCatalogProducts(products: ApiProduct[]) {
+  return [...products].sort((left, right) => {
+    const leftOrder = left.category.slug === 'kahk' ? kahkProductOrder.get(left.slug) ?? Number.MAX_SAFE_INTEGER : null;
+    const rightOrder = right.category.slug === 'kahk' ? kahkProductOrder.get(right.slug) ?? Number.MAX_SAFE_INTEGER : null;
+
+    if (leftOrder !== null || rightOrder !== null) {
+      if (leftOrder === null) return 1;
+      if (rightOrder === null) return -1;
+      return leftOrder - rightOrder;
+    }
+
+    return left.nameEn.localeCompare(right.nameEn);
+  });
+}
+
 function toProduct(product: ApiProduct): Product {
   const description = isRtl.value ? product.descriptionAr : product.descriptionEn;
   const servings = isRtl.value ? product.servingsAr : product.servingsEn;
@@ -100,7 +123,7 @@ export const useCatalogStore = defineStore('catalog', {
       try {
         const [categories, products] = await Promise.all([api.categories(), api.products()]);
         this.rawCategories = categories;
-        this.rawProducts = products.items;
+        this.rawProducts = sortCatalogProducts(products.items);
         this.loaded = true;
       } catch (reason) {
         this.error =
