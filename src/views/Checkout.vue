@@ -166,6 +166,12 @@ async function submitOrder() {
         anonymous: form.value.anonymous
       }
     });
+    store.rememberOrder({
+      orderNumber: created.value.orderNumber,
+      trackingToken: created.value.trackingToken,
+      placedAt: new Date().toISOString(),
+      totalFils: quote.value.totalFils
+    });
     store.clear();
   } catch (reason) {
     error.value = errorMessage(reason, 'error.order');

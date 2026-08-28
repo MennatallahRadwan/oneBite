@@ -8,6 +8,14 @@ export type CartSelection = {
   cakeText?: string;
 };
 
+export type PlacedOrder = {
+  orderNumber: string;
+  trackingToken: string;
+  /** ISO timestamp, so the list can be shown newest first. */
+  placedAt: string;
+  totalFils: number;
+};
+
 export type CartItem = {
   /** Identity of a configured line: the same cake in two sizes is two lines. */
   lineId: string;
@@ -31,6 +39,12 @@ export type CartItem = {
 // than migrated.
 const cartKey = 'onebite-cart-v3';
 const wishlistKey = 'onebite-wishlist';
+
+// Checkout is guest-capable, so most customers never get a server-side order
+// list. Remembering what this browser ordered is the only way back to a
+// tracking link without retyping the order number.
+const ordersKey = 'onebite-orders-v1';
+const maxRememberedOrders = 20;
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -88,7 +102,8 @@ export function buildCartItem(
 export const useShopStore = defineStore('shop', {
   state: () => ({
     cart: read<CartItem[]>(cartKey, []),
-    wishlist: read<string[]>(wishlistKey, [])
+    wishlist: read<string[]>(wishlistKey, []),
+    orders: read<PlacedOrder[]>(ordersKey, [])
   }),
 
   getters: {
@@ -100,6 +115,7 @@ export const useShopStore = defineStore('shop', {
     persist() {
       localStorage.setItem(cartKey, JSON.stringify(this.cart));
       localStorage.setItem(wishlistKey, JSON.stringify(this.wishlist));
+      localStorage.setItem(ordersKey, JSON.stringify(this.orders));
     },
 
     add(product: Product, quantity = 1, selection: CartSelection = {}) {
@@ -140,6 +156,14 @@ export const useShopStore = defineStore('shop', {
 
     setWishlist(ids: string[]) {
       this.wishlist = [...new Set(ids)];
+      this.persist();
+    },
+
+    rememberOrder(order: PlacedOrder) {
+      // Re-placing the same number (a retry) should move it to the top, not
+      // add a duplicate row.
+      this.orders = [order, ...this.orders.filter(kept => kept.orderNumber !== order.orderNumber)]
+        .slice(0, maxRememberedOrders);
       this.persist();
     },
 

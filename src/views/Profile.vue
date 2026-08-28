@@ -107,6 +107,26 @@ async function cancel(publicNumber: string) {
       <p v-if="customer.loading" class="form-note">{{ t('common.loadingSaved') }}</p>
       <p v-if="error" class="form-note" role="alert">{{ error }}</p>
 
+      <div
+        v-if="shop.orders.length || !customer.signedIn"
+        :id="customer.signedIn ? 'device-orders' : 'orders'"
+        class="account-panel"
+      >
+        <h2><Package/> {{ t('profile.deviceOrders') }}</h2>
+        <p v-if="shop.orders.length" class="form-note">{{ t('profile.deviceOrdersHint') }}</p>
+        <p v-if="!shop.orders.length" class="form-note">{{ t('profile.deviceOrdersEmpty') }}</p>
+        <div v-for="order in shop.orders" :key="order.orderNumber" class="order-row">
+          <span>
+            <b>{{ order.orderNumber }}</b>
+            <small>{{ new Date(order.placedAt).toLocaleDateString() }}</small>
+          </span>
+          <strong>{{ money(order.totalFils / 1000) }}</strong>
+          <AppLink class="btn secondary" :to="`/order/${order.trackingToken}`">
+            {{ t('checkout.track') }}
+          </AppLink>
+        </div>
+      </div>
+
       <div v-if="!customer.loading && !customer.signedIn" class="account-auth">
         <div class="account-panel">
           <div class="admin-head">
