@@ -377,6 +377,7 @@ export const en = {
   'contact.form.message': 'Message',
   'contact.form.messagePlaceholder': 'How can we help?',
   'contact.form.send': 'Send Message',
+  'contact.form.whatsappNote': 'This opens WhatsApp with your message ready to send.',
 
   'notFound.title': 'This bite is missing',
   'notFound.blurb': 'The page you are looking for may have moved or never made it out of the oven.',

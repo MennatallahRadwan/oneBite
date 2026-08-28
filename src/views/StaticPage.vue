@@ -24,6 +24,28 @@ const topics = computed(() => [
   t('contact.form.topicFeedback')
 ]);
 
+// The bakery answers customers on WhatsApp, so the contact form composes a
+// message and hands it over prefilled rather than posting to a mailbox that
+// nobody reads.
+const WHATSAPP_NUMBER = '96569099100';
+
+const contactName = ref('');
+const contactTopic = ref('');
+const contactMessage = ref('');
+
+function sendOnWhatsapp() {
+  const body = [
+    contactName.value && t('contact.form.name') + ': ' + contactName.value,
+    contactTopic.value && t('contact.form.topic') + ': ' + contactTopic.value,
+    contactMessage.value
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const url = `https://wa.me/${WHATSAPP_NUMBER}` + (body ? `?text=${encodeURIComponent(body)}` : '');
+  window.open(url, '_blank', 'noopener');
+}
+
 const values = computed(() => [
   {number: '01', title: t('about.value1'), copy: t('about.value1Blurb')},
   {number: '02', title: t('about.value2'), copy: t('about.value2Blurb')},
@@ -108,26 +130,23 @@ const values = computed(() => [
           </div>
         </div>
 
-        <form class="contact-form" @submit.prevent>
+        <form class="contact-form" @submit.prevent="sendOnWhatsapp">
           <label>
             {{ t('contact.form.name') }}
-            <input :placeholder="t('contact.form.namePlaceholder')">
-          </label>
-          <label>
-            {{ t('contact.form.email') }}
-            <input dir="ltr" placeholder="you@example.com">
+            <input v-model="contactName" :placeholder="t('contact.form.namePlaceholder')">
           </label>
           <label>
             {{ t('contact.form.topic') }}
-            <select>
+            <select v-model="contactTopic">
               <option v-for="topic in topics" :key="topic">{{ topic }}</option>
             </select>
           </label>
           <label>
             {{ t('contact.form.message') }}
-            <textarea rows="6" :placeholder="t('contact.form.messagePlaceholder')"></textarea>
+            <textarea v-model="contactMessage" rows="6" :placeholder="t('contact.form.messagePlaceholder')"></textarea>
           </label>
           <button class="btn primary">{{ t('contact.form.send') }}</button>
+          <small class="form-note">{{ t('contact.form.whatsappNote') }}</small>
         </form>
       </div>
     </section>

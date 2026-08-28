@@ -372,6 +372,7 @@ export const ar: Dictionary = {
   'contact.form.message': 'الرسالة',
   'contact.form.messagePlaceholder': 'كيف يمكننا المساعدة؟',
   'contact.form.send': 'إرسال الرسالة',
+  'contact.form.whatsappNote': 'سيفتح واتساب ورسالتك جاهزة للإرسال.',
 
   'notFound.title': 'هذه القطعة مفقودة',
   'notFound.blurb': 'ربما تم نقل الصفحة التي تبحث عنها أو أنها لم تخرج من الفرن أصلًا.',
