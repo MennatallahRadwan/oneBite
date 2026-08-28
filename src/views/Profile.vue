@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import {onMounted, ref} from 'vue';
-import {Heart, Home, LogOut, Package, Plus, ShieldCheck, Trash2, X} from 'lucide-vue-next';
+import {Heart, Home, LogOut, Package, Plus, ShieldCheck, Trash2} from 'lucide-vue-next';
 import PageHero from '../components/PageHero.vue';
 import AppLink from '../components/AppLink.vue';
-import {money} from '../data';
-import {t, type MessageKey} from '../i18n';
+import {t} from '../i18n';
 import {errorMessage} from '../i18n/errors';
 import {useCustomerStore} from '../stores/customer';
 import {useShopStore} from '../stores/shop';
@@ -81,18 +80,6 @@ async function addAddress() {
   }
 }
 
-async function cancel(publicNumber: string) {
-  if (!window.confirm(t('tracking.cancelConfirm'))) return;
-  busy.value = true;
-  error.value = '';
-  try {
-    await customer.cancelOrder(publicNumber);
-  } catch (reason) {
-    error.value = errorMessage(reason, 'error.order');
-  } finally {
-    busy.value = false;
-  }
-}
 </script>
 
 <template>
@@ -107,25 +94,6 @@ async function cancel(publicNumber: string) {
       <p v-if="customer.loading" class="form-note">{{ t('common.loadingSaved') }}</p>
       <p v-if="error" class="form-note" role="alert">{{ error }}</p>
 
-      <div
-        v-if="shop.orders.length || !customer.signedIn"
-        :id="customer.signedIn ? 'device-orders' : 'orders'"
-        class="account-panel"
-      >
-        <h2><Package/> {{ t('profile.deviceOrders') }}</h2>
-        <p v-if="shop.orders.length" class="form-note">{{ t('profile.deviceOrdersHint') }}</p>
-        <p v-if="!shop.orders.length" class="form-note">{{ t('profile.deviceOrdersEmpty') }}</p>
-        <div v-for="order in shop.orders" :key="order.orderNumber" class="order-row">
-          <span>
-            <b>{{ order.orderNumber }}</b>
-            <small>{{ new Date(order.placedAt).toLocaleDateString() }}</small>
-          </span>
-          <strong>{{ money(order.totalFils / 1000) }}</strong>
-          <AppLink class="btn secondary" :to="`/order/${order.trackingToken}`">
-            {{ t('checkout.track') }}
-          </AppLink>
-        </div>
-      </div>
 
       <div v-if="!customer.loading && !customer.signedIn" class="account-auth">
         <div class="account-panel">
@@ -162,7 +130,7 @@ async function cancel(publicNumber: string) {
           <h2>{{ t('profile.guestTitle') }}</h2>
           <p class="form-note">{{ t('profile.guestBlurb') }}</p>
           <div class="button-row">
-            <AppLink class="btn primary" to="/track">{{ t('profile.guestTrack') }}</AppLink>
+            <AppLink class="btn primary" to="/orders">{{ t('nav.orders') }}</AppLink>
             <AppLink class="btn secondary" to="/shop"><Package :size="17"/> {{ t('profile.guestShop') }}</AppLink>
           </div>
         </div>
@@ -178,28 +146,6 @@ async function cancel(publicNumber: string) {
         </div>
 
         <div class="account-grid">
-          <div id="orders" class="account-panel">
-            <h2><Package/> {{ t('profile.orders') }}</h2>
-            <p v-if="!customer.orders.length" class="form-note">{{ t('profile.noOrders') }}</p>
-            <div v-for="order in customer.orders" :key="order.publicNumber" class="order-row">
-              <span>
-                <b>{{ order.publicNumber }}</b>
-                <small>{{ order.areaName }} · <bdi>{{ order.deliveryWindow }}</bdi></small>
-                <small>{{ t(`tracking.fulfilment.${order.fulfilmentStatus}` as MessageKey) }} · {{ order.codStatus.replace(/_/g, ' ').toLowerCase() }}</small>
-              </span>
-              <strong>{{ money(order.totalFils / 1000) }}</strong>
-              <AppLink class="btn secondary" :to="`/order/${order.trackingToken}`">{{ t('checkout.track') }}</AppLink>
-              <button
-                v-if="order.status === 'PENDING_CONFIRMATION'"
-                class="btn secondary"
-                :disabled="busy"
-                @click="cancel(order.publicNumber)"
-              >
-                <X :size="15"/> {{ t('tracking.cancel') }}
-              </button>
-            </div>
-          </div>
-
           <div class="account-panel">
             <h2><Heart/> {{ t('profile.wishlist') }}</h2>
             <p class="form-note">{{ t('profile.wishlistCount', {count: shop.wishlist.length}) }}</p>

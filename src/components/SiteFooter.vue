@@ -27,7 +27,7 @@ import AppLink from './AppLink.vue';
       <div>
         <h4>{{ t('footer.help') }}</h4>
         <AppLink to="/faq">{{ t('footer.faq') }}</AppLink>
-        <AppLink to="/track">{{ t('footer.trackOrder') }}</AppLink>
+        <AppLink to="/orders">{{ t('nav.orders') }}</AppLink>
         <AppLink to="/contact">{{ t('footer.contact') }}</AppLink>
         <AppLink to="/about">{{ t('nav.ourStory') }}</AppLink>
       </div>

@@ -11,8 +11,8 @@ import Wishlist from '../views/Wishlist.vue';
 import Search from '../views/Search.vue';
 import StaticPage from '../views/StaticPage.vue';
 import Profile from '../views/Profile.vue';
+import Orders from '../views/Orders.vue';
 import OrderTracking from '../views/OrderTracking.vue';
-import TrackOrder from '../views/TrackOrder.vue';
 import Admin from '../views/Admin.vue';
 import NotFound from '../views/NotFound.vue';
 
@@ -31,8 +31,8 @@ const pages: RouteRecordRaw[] = [
   {path: '/wishlist', component: Wishlist},
   {path: '/search', component: Search},
   {path: '/profile', component: Profile},
+  {path: '/orders', component: Orders},
   {path: '/admin', component: Admin},
-  {path: '/track', component: TrackOrder},
   {path: '/order/:id', component: OrderTracking},
   {path: '/about', component: StaticPage, props: {type: 'about'}},
   {path: '/faq', component: StaticPage, props: {type: 'faq'}},

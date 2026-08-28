@@ -215,7 +215,7 @@ async function next() {
           {{ t('checkout.track') }}
         </button>
         <p class="form-note">
-          {{ saveLinkParts[0] }}<AppLink to="/track">{{ t('checkout.saveLinkTarget') }}</AppLink>{{ saveLinkParts[1] }}
+          {{ saveLinkParts[0] }}<AppLink to="/orders">{{ t('checkout.saveLinkTarget') }}</AppLink>{{ saveLinkParts[1] }}
         </p>
       </div>
 

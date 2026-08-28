@@ -129,7 +129,7 @@ watch(open, (isOpen) => {
           <span class="nav-action-label">{{ t("nav.account") }}</span>
         </AppLink>
         <AppLink
-          to="/profile#orders"
+          to="/orders"
           class="nav-action"
           :aria-label="t('nav.orders')"
         >
@@ -206,7 +206,7 @@ watch(open, (isOpen) => {
           <User :size="18" />
           <span>{{ t("nav.account") }}</span>
         </AppLink>
-        <AppLink to="/profile#orders" class="mobile-drawer-action" @click="closeMenu">
+        <AppLink to="/orders" class="mobile-drawer-action" @click="closeMenu">
           <Package :size="18" />
           <span>{{ t("nav.orders") }}</span>
         </AppLink>

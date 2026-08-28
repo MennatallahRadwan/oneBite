@@ -15,7 +15,7 @@ const titles: Record<string, Record<Locale, string>> = {
   '/wishlist': {en: 'Wishlist', ar: 'المفضلة'},
   '/search': {en: 'Search', ar: 'البحث'},
   '/profile': {en: 'Customer Account', ar: 'حساب العميل'},
-  '/track': {en: 'Track an Order', ar: 'تتبع طلب'},
+  '/orders': {en: 'Your Orders', ar: 'طلباتك'},
   '/about': {en: 'About One Bite', ar: 'عن ون بايت'},
   '/faq': {en: 'FAQ', ar: 'الأسئلة الشائعة'},
   '/contact': {en: 'Contact', ar: 'تواصل معنا'}
