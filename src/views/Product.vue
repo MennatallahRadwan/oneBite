@@ -20,7 +20,6 @@ onMounted(() => catalog.load());
 const qty = ref(1);
 const selectedVariant = ref('');
 const selectedAddons = ref<string[]>([]);
-const cakeText = ref('');
 
 const product = computed(() => catalog.byId(String(route.params.id)));
 
@@ -32,7 +31,6 @@ watch(
     qty.value = 1;
     selectedVariant.value = '';
     selectedAddons.value = [];
-    cakeText.value = '';
   }
 );
 
@@ -53,8 +51,7 @@ const unitPrice = computed(
   () =>
     (product.value?.price ?? 0) +
     (variant.value?.price ?? 0) +
-    addonsTotal.value +
-    (cakeText.value ? product.value?.cakeText?.price ?? 0 : 0)
+    addonsTotal.value
 );
 
 const related = computed(() =>
@@ -74,8 +71,7 @@ function add() {
     // The size buttons show the first variant as selected before the customer
     // touches them, so an untouched form must send that same variant.
     variantId: selectedVariant.value || product.value.variants?.[0]?.id,
-    addonIds: selectedAddons.value,
-    cakeText: cakeText.value
+    addonIds: selectedAddons.value
   };
 
   const item = store.add(product.value, qty.value, selection);
@@ -155,18 +151,6 @@ onBeforeUnmount(() => {
             {{ addon.name }} <small>+ {{ money(addon.price) }}</small>
           </label>
         </div>
-
-        <label v-if="product.cakeText" class="cake-text">
-          <b>{{ t('product.cakeText') }}</b>
-          <small>
-            {{ t('product.cakeTextHint', {price: money(product.cakeText.price), max: product.cakeText.maxLength}) }}
-          </small>
-          <input
-            v-model="cakeText"
-            :maxlength="product.cakeText.maxLength"
-            :placeholder="t('product.cakeTextPlaceholder')"
-          >
-        </label>
 
         <div class="purchase">
           <div class="qty">
