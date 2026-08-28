@@ -45,10 +45,13 @@ There is no Prisma migrations directory — schema changes live as SQL scripts i
 Windows with a schema engine error. Production therefore syncs with
 `npm run deploy:db` (`prisma db push`).
 
-**This is a manual step.** Render does not support `preDeployCommand` on free
-instances, so the blueprint does not declare one. Run it yourself against the
-database's external connection string before the first deploy and after every
-schema change:
+On Railway, [`railway.json`](railway.json) runs this as a pre-deploy command
+against the service's `DATABASE_URL`.
+
+On Render, **this is a manual step.** Render does not support
+`preDeployCommand` on free instances, so the blueprint does not declare one. Run
+it yourself against the database's external connection string before the first
+deploy and after every schema change:
 
 ```bash
 DATABASE_URL="<external connection string>" npm run deploy:db

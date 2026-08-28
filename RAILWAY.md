@@ -78,13 +78,14 @@ found under the Postgres service → Variables.
 
 ```powershell
 $env:DATABASE_URL="<DATABASE_PUBLIC_URL>"
-npm.cmd run deploy:db        # creates the schema (prisma db push)
 npm.cmd run prisma:seed      # catalog, 7 delivery areas, 30-day capacity
 npm.cmd run owner:bootstrap  # creates the owner account from .env
 ```
 
-Re-run `deploy:db` after any schema change. There is no migrations directory —
-see the Schema Changes section of [DEPLOYMENT.md](DEPLOYMENT.md).
+`railway.json` runs `npm run deploy:db` as Railway's pre-deploy command, so each
+GitHub deploy syncs the Prisma schema before the new container starts. There is
+no migrations directory — see the Schema Changes section of
+[DEPLOYMENT.md](DEPLOYMENT.md).
 
 ### 6. Redeploy
 
