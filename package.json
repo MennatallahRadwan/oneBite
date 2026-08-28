@@ -12,6 +12,7 @@
     "server:test": "tsx server/scripts/prepare-test-db.ts && vitest run --config server/vitest.config.ts",
     "server:test:dev-db": "npm run prisma:seed && vitest run --config server/vitest.config.ts",
     "smoke:sync": "tsx server/scripts/smoke-sync.ts",
+    "db:setup": "npm run prisma:generate && npm run deploy:db && npm run prisma:seed",
     "prisma:generate": "prisma generate --schema server/prisma/schema.prisma",
     "prisma:migrate": "prisma migrate dev --schema server/prisma/schema.prisma",
     "prisma:seed": "tsx server/prisma/seed.ts",
