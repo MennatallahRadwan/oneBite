@@ -50,11 +50,6 @@ watch(
         <span><b>{{ t('brand.name') }}</b><small>{{ t('brand.tagline') }}</small></span>
       </AppLink>
 
-      <button class="top-mobile-menu" :aria-label="t('nav.menu')" :aria-expanded="open" @click="open = !open">
-        <X v-if="open"/>
-        <Menu v-else/>
-      </button>
-
       <nav class="navlinks">
         <AppLink v-for="link in links" :key="link.to" :to="link.to" @click="open = false">
           {{ link.label }}

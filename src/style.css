@@ -302,7 +302,7 @@
   .announcement{display:none}
   .header .navlinks,
   .header .actions{display:none!important}
-  .top-mobile-menu{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--border);border-radius:12px;background:var(--white);color:var(--teal)}
+  .top-mobile-menu{display:none!important}
   .top-mobile-menu[aria-expanded=true]{background:#e9f3f1}
   .mobile-actions{
     position:fixed;
@@ -417,7 +417,7 @@
   .brand-mark{width:34px;height:34px;font-size:13px}
   .brand b{font-size:11px;letter-spacing:.16em}
   .brand small{font-size:8px;letter-spacing:.11em}
-  .top-mobile-menu{width:38px;height:38px;border-radius:10px}
+  .top-mobile-menu{display:none!important;width:38px;height:38px;border-radius:10px}
   .top-mobile-menu svg{width:20px;height:20px}
   .mobile-actions{
     grid-template-columns:repeat(4,minmax(0,1fr));
