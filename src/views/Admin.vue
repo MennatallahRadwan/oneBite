@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {computed, onMounted, ref} from 'vue';
-import {LockKeyhole, LogOut} from 'lucide-vue-next';
+import {CalendarDays, ClipboardList, LockKeyhole, LogOut, Megaphone, Package, Tags, Truck} from 'lucide-vue-next';
 import {api} from '../api/client';
 import {messageFrom} from '../components/admin/admin-ui';
 import OrdersPanel from '../components/admin/OrdersPanel.vue';
@@ -11,12 +11,12 @@ import CapacityPanel from '../components/admin/CapacityPanel.vue';
 import MarketingPanel from '../components/admin/MarketingPanel.vue';
 
 const sections = [
-  {key: 'orders', label: 'Orders', component: OrdersPanel},
-  {key: 'products', label: 'Products', component: ProductsPanel},
-  {key: 'categories', label: 'Categories', component: CategoriesPanel},
-  {key: 'marketing', label: 'Marketing', component: MarketingPanel},
-  {key: 'delivery', label: 'Delivery', component: DeliveryPanel},
-  {key: 'capacity', label: 'Capacity', component: CapacityPanel}
+  {key: 'orders', label: 'Orders', icon: ClipboardList, component: OrdersPanel},
+  {key: 'products', label: 'Products', icon: Package, component: ProductsPanel},
+  {key: 'categories', label: 'Categories', icon: Tags, component: CategoriesPanel},
+  {key: 'marketing', label: 'Marketing', icon: Megaphone, component: MarketingPanel},
+  {key: 'delivery', label: 'Delivery', icon: Truck, component: DeliveryPanel},
+  {key: 'capacity', label: 'Capacity', icon: CalendarDays, component: CapacityPanel}
 ] as const;
 
 const stage = ref<'loading' | 'password' | 'totp' | 'dashboard'>('loading');
@@ -133,29 +133,34 @@ async function logout() {
       </div>
 
       <template v-else>
-        <div class="checkout-head">
-          <span class="eyebrow">One Bite owner</span>
-          <h1>Bakery dashboard</h1>
-          <p>Signed in as {{ owner }}. Customer details are visible only to the owner.</p>
-          <button class="btn secondary" @click="logout"><LogOut :size="17"/> Sign out</button>
+        <div class="admin-shell">
+          <div class="admin-dashboard-head">
+            <div>
+              <span class="eyebrow">One Bite owner</span>
+              <h1>Bakery dashboard</h1>
+              <p>Signed in as {{ owner }}. Customer details are visible only to the owner.</p>
+            </div>
+            <button class="btn secondary admin-logout" @click="logout"><LogOut :size="17"/> Sign out</button>
+          </div>
+
+          <nav class="admin-tabs" aria-label="Admin sections">
+            <button
+              v-for="tab in sections"
+              :key="tab.key"
+              class="admin-tab"
+              :class="{active: section === tab.key}"
+              @click="section = tab.key"
+            >
+              <component :is="tab.icon" :size="16"/>
+              <span>{{ tab.label }}</span>
+            </button>
+          </nav>
+
+          <!-- Keyed on the section so switching tabs mounts a fresh panel, and
+               each one loads its own data rather than trusting what a sibling
+               fetched earlier. -->
+          <component :is="panel" :key="section"/>
         </div>
-
-        <nav class="admin-tabs">
-          <button
-            v-for="tab in sections"
-            :key="tab.key"
-            class="admin-tab"
-            :class="{active: section === tab.key}"
-            @click="section = tab.key"
-          >
-            {{ tab.label }}
-          </button>
-        </nav>
-
-        <!-- Keyed on the section so switching tabs mounts a fresh panel, and
-             each one loads its own data rather than trusting what a sibling
-             fetched earlier. -->
-        <component :is="panel" :key="section"/>
       </template>
     </div>
   </section>
