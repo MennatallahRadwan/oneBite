@@ -1,9 +1,6 @@
 import 'dotenv/config';
 import {prisma} from '../src/db.js';
 
-const img = (id: string, w = 900, h = 700) =>
-  `https://images.unsplash.com/photo-${id}?w=${w}&h=${h}&fit=crop&auto=format&q=82`;
-
 const productImages = {
   largeBox: '/images/products/bteforlarge.png',
   filledMalban: '/images/products/filledmalban.png',
@@ -75,7 +72,16 @@ const categories = [
   }
 ];
 
-const activeCategorySlugs = categories.map(category => category.slug);
+const retiredCategorySlugs = [
+  'cakes',
+  'pastries',
+  'cheesecakes',
+  'oriental',
+  'tarts',
+  'cookies',
+  'giftboxes',
+  'seasonal'
+];
 
 const cakeOptions = {
   variants: [
@@ -280,7 +286,13 @@ const products: SeedProduct[] = [
   }
 ];
 
-const activeProductSlugs = products.map(product => product.slug);
+const retiredProductSlugs = [
+  'cinnamon-roll',
+  'classic-gift-box',
+  'eid-gift-box',
+  'mango-passion-tart',
+  'matcha-white-chocolate'
+];
 
 const deliveryAreas = [
   {id: 'seed-salmiya', nameEn: 'Salmiya', nameAr: 'السالمية', feeFils: 1500},
@@ -311,10 +323,10 @@ async function seedCategories() {
     });
   }
 
-  // Keep old category rows out of the storefront after the catalog is narrowed.
-  await prisma.category.updateMany({
-    where: {slug: {notIn: activeCategorySlugs}, products: {none: {}}},
-    data: {archivedAt: new Date()}
+  // These slugs belonged to the original prototype catalog. Delete them when
+  // they have no products so admin views do not keep showing dummy categories.
+  await prisma.category.deleteMany({
+    where: {slug: {in: retiredCategorySlugs}, products: {none: {}}}
   });
 }
 
@@ -365,10 +377,18 @@ async function seedProducts() {
     await seedOptions(saved.id, product);
   }
 
-  await prisma.product.updateMany({
-    where: {slug: {notIn: activeProductSlugs}},
-    data: {published: false, active: false, archivedAt: new Date()}
+  const retiredProducts = await prisma.product.findMany({
+    where: {slug: {in: retiredProductSlugs}},
+    select: {id: true}
   });
+  const retiredProductIds = retiredProducts.map(product => product.id);
+
+  if (retiredProductIds.length) {
+    await prisma.productAddon.deleteMany({where: {productId: {in: retiredProductIds}}});
+    await prisma.productVariant.deleteMany({where: {productId: {in: retiredProductIds}}});
+    await prisma.wishlistItem.deleteMany({where: {productId: {in: retiredProductIds}}});
+    await prisma.product.deleteMany({where: {id: {in: retiredProductIds}}});
+  }
 }
 
 async function seedOptions(productId: string, product: SeedProduct) {
