@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import {computed, ref} from 'vue';
+import {computed, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
-import {Menu, X, Search, Heart, ShoppingBag, User, Languages} from 'lucide-vue-next';
+import {Heart, Languages, Menu, Search, ShoppingBag, User, X} from 'lucide-vue-next';
 import {useShopStore} from '../stores/shop';
 import {localePath, locale, setLocale, t, localizeDigits} from '../i18n';
 import AppLink from './AppLink.vue';
@@ -31,6 +31,13 @@ function toggleLocale() {
     hash: route.hash
   });
 }
+
+watch(
+  () => route.fullPath,
+  () => {
+    open.value = false;
+  }
+);
 </script>
 
 <template>
@@ -43,31 +50,78 @@ function toggleLocale() {
         <span><b>{{ t('brand.name') }}</b><small>{{ t('brand.tagline') }}</small></span>
       </AppLink>
 
-      <nav :class="['navlinks', {open}]">
+      <nav class="navlinks">
         <AppLink v-for="link in links" :key="link.to" :to="link.to" @click="open = false">
           {{ link.label }}
         </AppLink>
       </nav>
 
       <div class="actions">
-        <button class="locale-toggle" :aria-label="t('locale.switchLabel')" @click="toggleLocale">
-          <Languages :size="18"/> <span>{{ t('locale.switchTo') }}</span>
+        <button class="nav-action locale-toggle" :aria-label="t('locale.switchLabel')" @click="toggleLocale">
+          <Languages :size="18"/>
+          <span class="locale-text">{{ t('locale.switchTo') }}</span>
+          <span class="nav-action-label">{{ t('locale.switchTo') }}</span>
         </button>
-        <AppLink to="/search" :aria-label="t('nav.search')"><Search :size="20"/></AppLink>
-        <AppLink to="/profile" :aria-label="t('nav.account')"><User :size="20"/></AppLink>
-        <AppLink to="/wishlist" class="badge-wrap" :aria-label="t('nav.wishlist')">
+        <AppLink to="/search" class="nav-action" :aria-label="t('nav.search')">
+          <Search :size="20"/>
+          <span class="nav-action-label">{{ t('nav.search') }}</span>
+        </AppLink>
+        <AppLink to="/profile" class="nav-action" :aria-label="t('nav.account')">
+          <User :size="20"/>
+          <span class="nav-action-label">{{ t('nav.account') }}</span>
+        </AppLink>
+        <AppLink to="/wishlist" class="nav-action badge-wrap" :aria-label="t('nav.wishlist')">
           <Heart :size="20"/>
           <em v-if="store.wishlist.length">{{ localizeDigits(String(store.wishlist.length)) }}</em>
+          <span class="nav-action-label">{{ t('nav.wishlist') }}</span>
         </AppLink>
-        <AppLink to="/cart" class="badge-wrap" :aria-label="t('nav.cart')">
+        <AppLink to="/cart" class="nav-action badge-wrap" :aria-label="t('nav.cart')">
           <ShoppingBag :size="20"/>
           <em v-if="store.cartCount">{{ localizeDigits(String(store.cartCount)) }}</em>
+          <span class="nav-action-label">{{ t('nav.cart') }}</span>
         </AppLink>
-        <button class="menu" :aria-label="t('nav.menu')" @click="open = !open">
+        <button class="nav-action menu" :aria-label="t('nav.menu')" :aria-expanded="open" @click="open = !open">
           <X v-if="open"/>
           <Menu v-else/>
+          <span class="nav-action-label">{{ t('nav.menu') }}</span>
         </button>
       </div>
     </div>
   </header>
+
+  <nav :class="['mobile-navlinks', {open}]">
+    <AppLink v-for="link in links" :key="link.to" :to="link.to" @click="open = false">
+      {{ link.label }}
+    </AppLink>
+  </nav>
+
+  <div class="mobile-actions">
+    <button class="nav-action locale-toggle" :aria-label="t('locale.switchLabel')" @click="toggleLocale">
+      <Languages :size="18"/>
+      <span class="nav-action-label">{{ t('locale.switchTo') }}</span>
+    </button>
+    <AppLink to="/search" class="nav-action" :aria-label="t('nav.search')">
+      <Search :size="20"/>
+      <span class="nav-action-label">{{ t('nav.search') }}</span>
+    </AppLink>
+    <AppLink to="/profile" class="nav-action" :aria-label="t('nav.account')">
+      <User :size="20"/>
+      <span class="nav-action-label">{{ t('nav.account') }}</span>
+    </AppLink>
+    <AppLink to="/wishlist" class="nav-action badge-wrap" :aria-label="t('nav.wishlist')">
+      <Heart :size="20"/>
+      <em v-if="store.wishlist.length">{{ localizeDigits(String(store.wishlist.length)) }}</em>
+      <span class="nav-action-label">{{ t('nav.wishlist') }}</span>
+    </AppLink>
+    <AppLink to="/cart" class="nav-action badge-wrap" :aria-label="t('nav.cart')">
+      <ShoppingBag :size="20"/>
+      <em v-if="store.cartCount">{{ localizeDigits(String(store.cartCount)) }}</em>
+      <span class="nav-action-label">{{ t('nav.cart') }}</span>
+    </AppLink>
+    <button class="nav-action menu" :aria-label="t('nav.menu')" :aria-expanded="open" @click="open = !open">
+      <X v-if="open"/>
+      <Menu v-else/>
+      <span class="nav-action-label">{{ t('nav.menu') }}</span>
+    </button>
+  </div>
 </template>
