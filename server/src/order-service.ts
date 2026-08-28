@@ -107,13 +107,13 @@ async function reserveOnce(input: OrderRequest) {
       ? existingUser?.role === 'CUSTOMER'
         ? await tx.user.update({
             where: {id: existingUser.id},
-            data: {name: input.customer.name},
+            data: {name: input.customer.name, phone: input.customer.phone},
             select: {id: true}
           })
         : existingUser
           ? null
           : await tx.user.create({
-              data: {email: customerEmail, name: input.customer.name},
+              data: {email: customerEmail, name: input.customer.name, phone: input.customer.phone},
               select: {id: true}
             })
       : null;

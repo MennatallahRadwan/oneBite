@@ -98,7 +98,7 @@ export type OwnerOrderUpdate = {
 };
 
 export type Owner = {id: string; name: string; email: string | null};
-export type Customer = {id: string; name: string; email: string | null};
+export type Customer = {id: string; name: string; email: string | null; phone: string | null};
 
 export type CustomerOrder = {
   publicNumber: string;

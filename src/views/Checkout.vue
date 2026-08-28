@@ -5,12 +5,14 @@ import {ArrowLeft, ArrowRight, Check, Clock, Gift, MapPin, Wallet} from 'lucide-
 import {money, num} from '../data';
 import {api, type DeliveryArea, type Quote, type Slot} from '../api/client';
 import {useShopStore} from '../stores/shop';
+import {useCustomerStore} from '../stores/customer';
 import {localePath, locale, t, type MessageKey} from '../i18n';
 import {errorMessage} from '../i18n/errors';
 import AppLink from '../components/AppLink.vue';
 
 const router = useRouter();
 const store = useShopStore();
+const customer = useCustomerStore();
 
 const areas = ref<DeliveryArea[]>([]);
 const step = ref(0);
@@ -49,11 +51,52 @@ const stepLabels = computed(() => [
   t('checkout.step.gift')
 ]);
 
+const selectedAddressId = ref('');
+
+function applySavedAddress(id: string) {
+  const saved = customer.addresses.find(address => address.id === id);
+  if (!saved) return;
+  form.value.governorate = saved.governorate;
+  form.value.area = saved.areaName;
+  form.value.block = saved.block;
+  form.value.street = saved.street;
+  form.value.building = saved.building;
+  form.value.floor = saved.floorOrApartment ?? '';
+  form.value.instructions = saved.deliveryInstructions ?? '';
+}
+
+// A signed-in customer already told us all of this once. Only empty fields
+// are filled, so a value typed before the account finished loading survives.
+function prefillFromAccount() {
+  const account = customer.customer;
+  if (!account) return;
+
+  const parts = (account.name ?? '').trim().split(/s+/);
+  if (!form.value.first) form.value.first = parts.shift() ?? '';
+  if (!form.value.last) form.value.last = parts.join(' ');
+  if (!form.value.email) form.value.email = account.email ?? '';
+  if (!form.value.phone) form.value.phone = account.phone ?? '';
+
+  const first = customer.addresses[0];
+  if (first && !form.value.governorate) {
+    selectedAddressId.value = first.id;
+    applySavedAddress(first.id);
+  }
+}
+
 onMounted(async () => {
   try {
     areas.value = (await api.deliveryAreas()).items;
   } catch {
     error.value = t('error.areas');
+  }
+
+  try {
+    await customer.load();
+    prefillFromAccount();
+  } catch {
+    // Checkout works signed out, so a failed account load is not an error
+    // worth showing here.
   }
 });
 
@@ -243,6 +286,14 @@ async function next() {
             <section v-if="step === 0">
               <h2><MapPin/> {{ t('checkout.delivery.title') }}</h2>
               <p class="form-note">{{ t('checkout.delivery.blurb') }}</p>
+              <label v-if="customer.addresses.length > 1" class="saved-address-pick">
+                {{ t('checkout.savedAddress') }}
+                <select v-model="selectedAddressId" @change="applySavedAddress(selectedAddressId)">
+                  <option v-for="saved in customer.addresses" :key="saved.id" :value="saved.id">
+                    {{ saved.label }} - {{ saved.areaName }}, {{ saved.block }}
+                  </option>
+                </select>
+              </label>
               <div class="form-grid">
                 <label>{{ t('checkout.field.first') }}<input v-model="form.first"></label>
                 <label>{{ t('checkout.field.last') }}<input v-model="form.last"></label>

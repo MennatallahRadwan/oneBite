@@ -678,3 +678,31 @@
   flex:none;
   width:18px
 }
+
+/* Panel headings carry a lucide icon, and the reset makes every svg a block,
+   so the icon sat on its own line above the heading text. .checkout-form h2
+   already had this treatment; account panels did not. */
+.account-panel h2{
+  display:flex;
+  align-items:center;
+  gap:9px
+}
+
+.saved-address-pick{
+  display:block;
+  margin:0 0 18px;
+  font-size:13px;
+  font-weight:700;
+  color:#444
+}
+
+.saved-address-pick select{
+  display:block;
+  width:100%;
+  margin-top:7px;
+  border:1px solid var(--border);
+  background:var(--alt);
+  padding:12px;
+  border-radius:10px;
+  outline:0
+}
