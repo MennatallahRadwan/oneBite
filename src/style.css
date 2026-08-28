@@ -658,3 +658,23 @@
   from{transform:translateX(-100%)}
   to{transform:translateX(0)}
 }
+
+/* ---- Icon alignment ----
+   The reset sets img,svg,video{display:block}. A block-level icon ignores the
+   text-align that centres an empty state, so it sat flush against the start
+   edge, and inside a notice it broke onto its own line instead of sitting
+   beside the sentence it belongs to. */
+.empty svg{
+  margin-inline:auto
+}
+
+.availability-notice{
+  display:flex;
+  align-items:center;
+  gap:10px
+}
+
+.availability-notice svg{
+  flex:none;
+  width:18px
+}
