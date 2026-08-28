@@ -6,6 +6,7 @@ import {
   Languages,
   Menu,
   Search,
+  Package,
   ShoppingBag,
   User,
   X,
@@ -128,6 +129,14 @@ watch(open, (isOpen) => {
           <span class="nav-action-label">{{ t("nav.account") }}</span>
         </AppLink>
         <AppLink
+          to="/profile#orders"
+          class="nav-action"
+          :aria-label="t('nav.orders')"
+        >
+          <Package :size="20" />
+          <span class="nav-action-label">{{ t("nav.orders") }}</span>
+        </AppLink>
+        <AppLink
           to="/wishlist"
           class="nav-action badge-wrap"
           :aria-label="t('nav.wishlist')"
@@ -196,6 +205,10 @@ watch(open, (isOpen) => {
         <AppLink to="/profile" class="mobile-drawer-action" @click="closeMenu">
           <User :size="18" />
           <span>{{ t("nav.account") }}</span>
+        </AppLink>
+        <AppLink to="/profile#orders" class="mobile-drawer-action" @click="closeMenu">
+          <Package :size="18" />
+          <span>{{ t("nav.orders") }}</span>
         </AppLink>
         <AppLink to="/wishlist" class="mobile-drawer-action badge-wrap" @click="closeMenu">
           <Heart :size="18" />

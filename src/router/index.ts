@@ -46,7 +46,7 @@ const arabicPages: RouteRecordRaw[] = pages.map(page => ({
 
 const router = createRouter({
   history: createWebHistory(),
-  scrollBehavior: () => ({top: 0}),
+  scrollBehavior: to => (to.hash ? {el: to.hash, top: 90} : {top: 0}),
   routes: [...pages, ...arabicPages, {path: '/:pathMatch(.*)*', component: NotFound}]
 });
 

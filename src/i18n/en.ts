@@ -19,6 +19,7 @@ export const en = {
   'nav.ourStory': 'Our Story',
   'nav.search': 'Search',
   'nav.account': 'Account',
+  'nav.orders': 'My Orders',
   'nav.wishlist': 'Wishlist',
   'nav.cart': 'Cart',
   'nav.menu': 'Menu',

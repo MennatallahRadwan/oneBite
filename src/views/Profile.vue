@@ -151,7 +151,7 @@ async function cancel(publicNumber: string) {
         </div>
 
         <div class="account-grid">
-          <div class="account-panel">
+          <div id="orders" class="account-panel">
             <h2><Package/> {{ t('profile.orders') }}</h2>
             <p v-if="!customer.orders.length" class="form-note">{{ t('profile.noOrders') }}</p>
             <div v-for="order in customer.orders" :key="order.publicNumber" class="order-row">

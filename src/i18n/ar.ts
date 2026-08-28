@@ -18,6 +18,7 @@ export const ar: Dictionary = {
   'nav.ourStory': 'قصتنا',
   'nav.search': 'بحث',
   'nav.account': 'الحساب',
+  'nav.orders': 'طلباتي',
   'nav.wishlist': 'المفضلة',
   'nav.cart': 'السلة',
   'nav.menu': 'القائمة',
