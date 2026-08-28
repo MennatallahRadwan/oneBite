@@ -323,8 +323,13 @@ async function seedCategories() {
     });
   }
 
-  // These slugs belonged to the original prototype catalog. Delete them when
-  // they have no products so admin views do not keep showing dummy categories.
+}
+
+// These slugs belonged to the original prototype catalog. Delete them when they
+// have no products so admin views do not keep showing dummy categories. This runs
+// after seedProducts, because the prototype products are only moved off these
+// categories there - cleaning up earlier would always find them non-empty.
+async function cleanupRetiredCategories() {
   await prisma.category.deleteMany({
     where: {slug: {in: retiredCategorySlugs}, products: {none: {}}}
   });
@@ -477,6 +482,7 @@ async function seedCapacityAndSlots() {
 async function main() {
   await seedCategories();
   await seedProducts();
+  await cleanupRetiredCategories();
   await seedCapacityAndSlots();
 
   const [productCount, variantCount, addonCount, areaCount] = await Promise.all([
