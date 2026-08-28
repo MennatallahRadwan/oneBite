@@ -32,6 +32,10 @@ const pages: RouteRecordRaw[] = [
   {path: '/search', component: Search},
   {path: '/profile', component: Profile},
   {path: '/orders', component: Orders},
+  // /track used to be the order lookup form and the checkout page told
+  // customers to save that link, so old bookmarks land on the orders list
+  // rather than a 404.
+  {path: '/track', redirect: '/orders'},
   {path: '/admin', component: Admin},
   {path: '/order/:id', component: OrderTracking},
   {path: '/about', component: StaticPage, props: {type: 'about'}},
