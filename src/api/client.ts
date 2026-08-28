@@ -383,6 +383,9 @@ export const api = {
 
   tracking: (token: string) => request<TrackingOrder>(`/tracking/${encodeURIComponent(token)}`),
 
+  trackingByNumber: (publicNumber: string) =>
+    request<TrackingOrder>(`/tracking/public/${encodeURIComponent(publicNumber)}`),
+
   cancelOrder: (token: string) =>
     post<CancelledOrder>(`/tracking/${encodeURIComponent(token)}/cancel`, {}),
 

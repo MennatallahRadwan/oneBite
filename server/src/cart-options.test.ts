@@ -46,7 +46,7 @@ describe('cart options', () => {
     const response = await quote([{slug, quantity: 1, variantId: small}]);
 
     expect(response.status).toBe(200);
-    expect(response.body.subtotalFils).toBe(8500);
+    expect(response.body.subtotalFils).toBe(12000);
     expect(response.body.capacityPoints).toBe(8);
   });
 
@@ -54,8 +54,8 @@ describe('cart options', () => {
     const response = await quote([{slug, quantity: 1, variantId: large}]);
 
     expect(response.status).toBe(200);
-    // Base 8500 plus the variant's 2500 surcharge.
-    expect(response.body.subtotalFils).toBe(11000);
+    // Base 12000 plus the variant's 2500 surcharge.
+    expect(response.body.subtotalFils).toBe(14500);
     // The variant replaces the product's points rather than adding to them.
     expect(response.body.capacityPoints).toBe(12);
   });
@@ -66,8 +66,8 @@ describe('cart options', () => {
     ]);
 
     expect(response.status).toBe(200);
-    // (8500 base + 2500 variant + 750 gift box + 500 cake text) x 2.
-    expect(response.body.subtotalFils).toBe(24500);
+    // (12000 base + 2500 variant + 750 gift box + 500 cake text) x 2.
+    expect(response.body.subtotalFils).toBe(31500);
     expect(response.body.items[0].variantName).toBe('Serves 10–12');
     expect(response.body.items[0].addonNames).toEqual(['Gift packaging']);
     expect(response.body.items[0].cakeText).toBe('Happy Birthday Noor');
@@ -115,17 +115,17 @@ describe('cart options', () => {
     });
 
     expect(saved.items).toHaveLength(1);
-    // 8500 base + 2500 variant + 750 gift box + 500 cake text.
+    // 12000 base + 2500 variant + 750 gift box + 500 cake text.
     const [item] = saved.items;
     expect(item.variantName).toBe('Serves 10–12');
     expect(item.cakeText).toBe('Congratulations');
-    expect(item.unitPriceFils).toBe(12250);
+    expect(item.unitPriceFils).toBe(15750);
     expect(item.capacityPoints).toBe(12);
     expect(item.selectedAddons).toEqual([
       {nameEn: 'Gift packaging', nameAr: 'تغليف الهدايا', priceFils: 750}
     ]);
     expect(item.allergens).toEqual(['Gluten', 'Dairy', 'Eggs']);
-    expect(saved.subtotalFils).toBe(12250);
+    expect(saved.subtotalFils).toBe(15750);
     expect(saved.capacityPoints).toBe(12);
   });
 });

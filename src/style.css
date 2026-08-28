@@ -280,7 +280,9 @@
    pin a separate navigation surface to the viewport bottom. */
 .mobile-actions,.mobile-navlinks{display:none}
 
-@media(max-width:768px){
+@media(max-width:900px){
+  body{padding-bottom:calc(86px + env(safe-area-inset-bottom))}
+  .announcement{display:none}
   .header .navlinks,
   .header .actions{display:none!important}
   .mobile-actions{
@@ -356,4 +358,30 @@
 @media(max-width:420px){
   .mobile-actions{grid-template-columns:repeat(5,minmax(0,1fr))}
   .mobile-actions .locale-toggle{display:none!important}
+}
+
+.tracking-summary{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:24px}
+.tracking-summary h2{margin:0;font-size:28px}
+.tracking-summary .eyebrow{margin-bottom:8px}
+.order-status{margin:28px 0}
+.status-labels{grid-template-columns:repeat(5,minmax(0,1fr))}
+
+@media(max-width:900px){
+  html,body,#app{max-width:100%;overflow-x:hidden}
+  .status-labels{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+  .status-labels b{font-size:12px;line-height:1.25}
+  .tracking-summary{display:grid}
+  .admin-row,.order-row{display:grid;grid-template-columns:1fr;align-items:start}
+  .admin-mini-select{width:100%}
+  .admin-mini-select select{width:100%;max-width:none}
+  .order-actions{display:flex;flex-wrap:wrap;gap:8px}
+}
+
+@media(max-width:640px){
+  .track-card{padding:20px 14px}
+  .tracking-summary h2{font-size:23px}
+  .status-line span{width:34px;height:34px}
+  .status-line svg{width:17px;height:17px}
+  .status-labels{font-size:10px}
+  .status-labels b{font-size:10px}
 }

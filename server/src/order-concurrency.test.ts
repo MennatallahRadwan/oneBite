@@ -5,7 +5,7 @@ import {createApp} from './app.js';
 
 const app = createApp();
 const area = 'Hawally';
-const slug = 'cinnamon-roll';
+const slug = 'caramel-croissant';
 
 const placed: string[] = [];
 

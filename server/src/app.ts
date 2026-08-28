@@ -329,21 +329,36 @@ export function createApp() {
     }
   });
 
+  const trackingSelect = {
+    publicNumber: true,
+    status: true,
+    fulfilmentStatus: true,
+    codStatus: true,
+    deliveryWindow: true,
+    areaName: true,
+    isDelayed: true,
+    delayReason: true,
+    createdAt: true
+  } as const;
+
+  app.get('/api/v1/tracking/public/:publicNumber', async (req, res, next) => {
+    try {
+      const found = await prisma.order.findUnique({
+        where: {publicNumber: req.params.publicNumber},
+        select: trackingSelect
+      });
+      if (!found) return res.status(404).json({error: {code: 'NOT_FOUND', message: 'Tracking record not found'}});
+      res.json(found);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get('/api/v1/tracking/:token', async (req, res, next) => {
     try {
       const found = await prisma.order.findUnique({
         where: {trackingToken: req.params.token},
-        select: {
-          publicNumber: true,
-          status: true,
-          fulfilmentStatus: true,
-          codStatus: true,
-          deliveryWindow: true,
-          areaName: true,
-          isDelayed: true,
-          delayReason: true,
-          createdAt: true
-        }
+        select: trackingSelect
       });
       if (!found) return res.status(404).json({error: {code: 'NOT_FOUND', message: 'Tracking record not found'}});
       res.json(found);

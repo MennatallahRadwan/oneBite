@@ -2,6 +2,7 @@ import {afterAll, describe, expect, it} from 'vitest';
 import request from 'supertest';
 import {prisma} from './db.js';
 import {createApp} from './app.js';
+import {updateOrderLifecycle} from './order-lifecycle-service.js';
 
 const app = createApp();
 let created: {orderNumber: string; date: string; window: string; points: number} | undefined;
@@ -59,7 +60,7 @@ describe('order reservation', () => {
       include: {items: true, reservation: true}
     });
     expect(saved.status).toBe('PENDING_CONFIRMATION');
-    expect(saved.items[0].unitPriceFils).toBe(8500);
+    expect(saved.items[0].unitPriceFils).toBe(quote.body.items[0].unitPriceFils);
     expect(saved.governorate).toBe('Hawalli');
     expect(saved.floorOrApartment).toBe('4');
     expect(saved.deliveryInstructions).toBe('Call on arrival');
@@ -68,6 +69,22 @@ describe('order reservation', () => {
     const tracked = await request(app).get(`/api/v1/tracking/${placed.body.trackingToken}`);
     expect(tracked.status).toBe(200);
     expect(tracked.body.publicNumber).toBe(placed.body.orderNumber);
+
+    const publicTracked = await request(app).get(`/api/v1/tracking/public/${placed.body.orderNumber}`);
+    expect(publicTracked.status).toBe(200);
+    expect(publicTracked.body.status).toBe('PENDING_CONFIRMATION');
+
+    await updateOrderLifecycle(placed.body.orderNumber, {status: 'CONFIRMED'});
+    await updateOrderLifecycle(placed.body.orderNumber, {
+      fulfilmentStatus: 'PREPARING',
+      codStatus: 'COLLECTED'
+    });
+
+    const updatedTracking = await request(app).get(`/api/v1/tracking/public/${placed.body.orderNumber}`);
+    expect(updatedTracking.status).toBe(200);
+    expect(updatedTracking.body.status).toBe('CONFIRMED');
+    expect(updatedTracking.body.fulfilmentStatus).toBe('PREPARING');
+    expect(updatedTracking.body.codStatus).toBe('COLLECTED');
 
     const lookup = await request(app)
       .post('/api/v1/tracking/lookup')

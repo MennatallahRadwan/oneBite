@@ -4,7 +4,7 @@ import {prisma} from './db.js';
 import {createApp} from './app.js';
 
 const area = 'Jabriya';
-const slug = 'cinnamon-roll';
+const slug = 'caramel-croissant';
 
 const placed: string[] = [];
 
