@@ -144,7 +144,14 @@ async function cancel(publicNumber: string) {
             </label>
             <label class="span2">
               {{ t('profile.password') }}
-              <input v-model="auth.password" type="password" autocomplete="current-password" minlength="12" required>
+              <input
+                v-model="auth.password"
+                type="password"
+                :autocomplete="mode === 'register' ? 'new-password' : 'current-password'"
+                minlength="12"
+                required
+              >
+              <small class="form-note">{{ t('profile.passwordHint') }}</small>
             </label>
             <button class="btn primary span2" :disabled="busy">
               {{ busy ? t('checkout.wait') : mode === 'login' ? t('profile.login') : t('profile.register') }}

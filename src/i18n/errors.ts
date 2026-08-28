@@ -8,6 +8,7 @@ const messages: Record<string, MessageKey> = {
   UNAVAILABLE: 'error.unavailable',
   STALE_QUOTE: 'error.staleQuote',
   VALIDATION_ERROR: 'error.validation',
+  CONFLICT: 'error.conflict',
   NOT_FOUND: 'error.notFound',
   UNAUTHENTICATED: 'error.unauthenticated',
   INVALID_CREDENTIALS: 'error.invalidCredentials',
