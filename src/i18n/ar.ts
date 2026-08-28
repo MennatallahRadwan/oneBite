@@ -45,6 +45,7 @@ export const ar: Dictionary = {
   'common.availableProducts': '{count} منتج متاح',
   'common.from': 'ابتداءً من {price}',
   'common.viewAll': 'عرض الكل',
+  'common.close': 'إغلاق',
 
   'home.hero.pill': 'يُحضّر عند الطلب · توصيل داخل الكويت',
   'home.hero.line1': 'نخبز بكل حب،',
@@ -188,6 +189,9 @@ export const ar: Dictionary = {
   'cart.checkout': 'إتمام الطلب',
   'cart.note': 'الدفع عند الاستلام · يؤكد المخبز كل طلب',
   'cart.quantity': 'الكمية {count}',
+  'cartToast.title': 'تمت الإضافة إلى سلتك',
+  'cartToast.checkout': 'إتمام الطلب',
+  'cartToast.continue': 'متابعة التسوق',
 
   'checkout.received': 'تم استلام طلبك',
   'checkout.awaiting': 'بانتظار تأكيد المخبز',

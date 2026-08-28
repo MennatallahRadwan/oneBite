@@ -108,6 +108,7 @@ export const useShopStore = defineStore('shop', {
       if (found) found.quantity += quantity;
       else this.cart.push(item);
       this.persist();
+      return found ?? item;
     },
 
     remove(lineId: string) {

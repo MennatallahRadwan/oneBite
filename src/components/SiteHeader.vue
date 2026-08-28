@@ -90,16 +90,16 @@ watch(
   </header>
 
   <nav :class="['mobile-navlinks', {open}]">
+    <button class="mobile-menu-locale" :aria-label="t('locale.switchLabel')" @click="toggleLocale">
+      <Languages :size="18"/>
+      <span>{{ t('locale.switchTo') }}</span>
+    </button>
     <AppLink v-for="link in links" :key="link.to" :to="link.to" @click="open = false">
       {{ link.label }}
     </AppLink>
   </nav>
 
   <div class="mobile-actions">
-    <button class="nav-action locale-toggle" :aria-label="t('locale.switchLabel')" @click="toggleLocale">
-      <Languages :size="18"/>
-      <span class="nav-action-label">{{ t('locale.switchTo') }}</span>
-    </button>
     <AppLink to="/search" class="nav-action" :aria-label="t('nav.search')">
       <Search :size="20"/>
       <span class="nav-action-label">{{ t('nav.search') }}</span>

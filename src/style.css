@@ -131,6 +131,22 @@
 .admin-mini-select select{border:1px solid var(--border);background:var(--alt);border-radius:9px;padding:7px 9px;max-width:170px}
 .admin-mini-select select:disabled{opacity:.55}
 
+/* ---- Add-to-cart confirmation ---- */
+.cart-toast{position:fixed;inset-inline-end:22px;top:98px;z-index:999;width:min(390px,calc(100vw - 32px));background:var(--white);border:1px solid rgba(42,122,114,.35);border-radius:16px;box-shadow:0 22px 60px rgba(15,51,48,.28);padding:18px;display:grid;gap:14px}
+.cart-toast-close{position:absolute;inset-inline-end:10px;top:10px;width:30px;height:30px;border:0;background:var(--alt);border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.cart-toast-head{display:flex;align-items:center;gap:10px;padding-inline-end:30px;color:var(--teal)}
+.cart-toast-head div{display:grid}
+.cart-toast-head small{color:var(--muted);font-size:12px}
+.cart-toast-item{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center}
+.cart-toast-item img{width:64px;height:58px;border-radius:10px;object-fit:cover}
+.cart-toast-item span{display:grid;min-width:0}
+.cart-toast-item strong,.cart-toast-item small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cart-toast-item small{color:var(--muted);font-size:12px}
+.cart-toast-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cart-toast-actions .btn{min-height:42px;padding:10px 12px;border-radius:10px}
+.cart-toast-enter-active,.cart-toast-leave-active{transition:opacity .18s ease,transform .18s ease}
+.cart-toast-enter-from,.cart-toast-leave-to{opacity:0;transform:translateY(-8px)}
+
 /* ---- Responsive navigation and phone polish ---- */
 .nav-action{display:grid;place-items:center;color:var(--ink)}
 .nav-action-label{display:none}
@@ -281,7 +297,7 @@
 .mobile-actions,.mobile-navlinks{display:none}
 
 @media(max-width:900px){
-  body{padding-bottom:calc(86px + env(safe-area-inset-bottom))}
+  body{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
   .announcement{display:none}
   .header .navlinks,
   .header .actions{display:none!important}
@@ -292,9 +308,9 @@
     bottom:0;
     z-index:100;
     display:grid;
-    grid-template-columns:repeat(6,minmax(0,1fr));
+    grid-template-columns:repeat(5,minmax(0,1fr));
     gap:2px;
-    padding:7px max(8px,env(safe-area-inset-left)) calc(7px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-right));
+    padding:6px max(8px,env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-right));
     background:rgba(250,250,248,.98);
     border-top:1px solid var(--border);
     box-shadow:0 -12px 30px rgba(15,51,48,.14);
@@ -310,8 +326,8 @@
     align-items:center;
     width:100%;
     min-width:0;
-    height:50px;
-    padding:6px 2px;
+    height:48px;
+    padding:5px 2px;
     border:0;
     border-radius:10px;
     background:transparent;
@@ -340,7 +356,7 @@
     position:fixed;
     left:10px;
     right:10px;
-    bottom:calc(72px + env(safe-area-inset-bottom));
+    bottom:calc(64px + env(safe-area-inset-bottom));
     z-index:95;
     max-height:min(62vh,430px);
     overflow:auto;
@@ -353,11 +369,11 @@
   .mobile-navlinks.open{display:grid}
   .mobile-navlinks a{padding:14px 12px;border-radius:10px;font-weight:700}
   .mobile-navlinks a.router-link-active{background:var(--alt);color:var(--teal)}
+  .mobile-menu-locale{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:1px solid var(--border);background:var(--alt);color:var(--teal);padding:13px 12px;border-radius:10px;font-weight:800}
 }
 
 @media(max-width:420px){
   .mobile-actions{grid-template-columns:repeat(5,minmax(0,1fr))}
-  .mobile-actions .locale-toggle{display:none!important}
 }
 
 .tracking-summary{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:24px}
@@ -384,4 +400,7 @@
   .status-line svg{width:17px;height:17px}
   .status-labels{font-size:10px}
   .status-labels b{font-size:10px}
+  .cart-toast{left:14px;right:14px;inset-inline-end:auto;top:auto;bottom:calc(88px + env(safe-area-inset-bottom));width:auto;padding:16px}
+  .cart-toast-actions{grid-template-columns:1fr}
+  .cart-toast-enter-from,.cart-toast-leave-to{transform:translateY(10px)}
 }

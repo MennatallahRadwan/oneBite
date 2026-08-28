@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, onMounted, ref, watch} from 'vue';
+import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue';
 import {useRoute} from 'vue-router';
 import {Heart, Minus, Plus, ShoppingBag, Truck, ShieldCheck, Clock} from 'lucide-vue-next';
 import {money, num} from '../data';
@@ -8,6 +8,8 @@ import {useShopStore} from '../stores/shop';
 import {t} from '../i18n';
 import ProductCard from '../components/ProductCard.vue';
 import AppLink from '../components/AppLink.vue';
+import CartAddedToast from '../components/CartAddedToast.vue';
+import type {CartItem} from '../stores/shop';
 
 const route = useRoute();
 const store = useShopStore();
@@ -62,21 +64,39 @@ const related = computed(() =>
 );
 
 const added = ref(false);
+const addedItem = ref<CartItem | null>(null);
+let addedTimer: number | undefined;
 
 function add() {
   if (!product.value) return;
 
-  store.add(product.value, qty.value, {
+  const selection = {
     // The size buttons show the first variant as selected before the customer
     // touches them, so an untouched form must send that same variant.
     variantId: selectedVariant.value || product.value.variants?.[0]?.id,
     addonIds: selectedAddons.value,
     cakeText: cakeText.value
-  });
+  };
 
+  const item = store.add(product.value, qty.value, selection);
   added.value = true;
-  window.setTimeout(() => (added.value = false), 2500);
+  addedItem.value = item;
+  if (addedTimer) window.clearTimeout(addedTimer);
+  addedTimer = window.setTimeout(() => {
+    added.value = false;
+    addedItem.value = null;
+  }, 6000);
 }
+
+function closeAddedToast() {
+  added.value = false;
+  addedItem.value = null;
+  if (addedTimer) window.clearTimeout(addedTimer);
+}
+
+onBeforeUnmount(() => {
+  if (addedTimer) window.clearTimeout(addedTimer);
+});
 </script>
 
 <template>
@@ -166,10 +186,6 @@ function add() {
           </button>
         </div>
 
-        <p v-if="added" class="form-note" role="status">
-          {{ t('product.added') }} <AppLink to="/cart">{{ t('product.viewCart') }}</AppLink>
-        </p>
-
         <div class="detail-trust">
           <span><Truck/> {{ t('product.trust.fee') }}</span>
           <span><Clock/> {{ t('product.trust.confirm') }}</span>
@@ -178,6 +194,8 @@ function add() {
       </div>
     </div>
   </section>
+
+  <CartAddedToast :item="added && addedItem ? addedItem : null" @close="closeAddedToast"/>
 
   <section v-if="related.length" class="section alt">
     <div class="container">

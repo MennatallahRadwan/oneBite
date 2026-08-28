@@ -46,6 +46,7 @@ export const en = {
   'common.availableProducts': '{count} available products',
   'common.from': 'From {price}',
   'common.viewAll': 'View all',
+  'common.close': 'Close',
 
   'home.hero.pill': 'Made to order · Kuwait delivery',
   'home.hero.line1': 'Baked with Love,',
@@ -189,6 +190,9 @@ export const en = {
   'cart.checkout': 'Proceed to Checkout',
   'cart.note': 'Cash on delivery · Every order is confirmed by the bakery',
   'cart.quantity': 'Qty {count}',
+  'cartToast.title': 'Added to your cart',
+  'cartToast.checkout': 'Checkout',
+  'cartToast.continue': 'Continue Shopping',
 
   'checkout.received': 'Order request received',
   'checkout.awaiting': 'Awaiting bakery confirmation',
