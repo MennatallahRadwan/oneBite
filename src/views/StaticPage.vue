@@ -92,11 +92,15 @@ const values = computed(() => [
           <p>{{ t('contact.hours') }}</p>
           <div class="contact-card">
             <b>{{ t('contact.phoneLabel') }}</b>
-            <p><bdi>+965 2222 1000</bdi></p>
+            <p><bdi>+965 6909 9100</bdi></p>
           </div>
           <div class="contact-card">
-            <b>{{ t('contact.emailLabel') }}</b>
-            <p><bdi>hello@onebite.com</bdi></p>
+            <b>{{ t('contact.instagramLabel') }}</b>
+            <p>
+              <a href="https://www.instagram.com/one_bite_q8?igsi=MXFjbDNybHppNjJlZw==" target="_blank" rel="noreferrer">
+                @one_bite_q8
+              </a>
+            </p>
           </div>
           <div class="contact-card">
             <b>{{ t('contact.bakeryLabel') }}</b>

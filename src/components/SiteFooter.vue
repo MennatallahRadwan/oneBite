@@ -35,8 +35,13 @@ import AppLink from './AppLink.vue';
       <div>
         <h4>{{ t('footer.contactHeading') }}</h4>
         <p><MapPin/> {{ t('footer.location') }}</p>
-        <p><Phone/> <bdi>+965 2222 1000</bdi></p>
-        <p><Mail/> hello@onebite.com</p>
+        <p><Phone/> <bdi>+965 6909 9100</bdi></p>
+        <p>
+          <Instagram/>
+          <a href="https://www.instagram.com/one_bite_q8?igsi=MXFjbDNybHppNjJlZw==" target="_blank" rel="noreferrer">
+            @one_bite_q8
+          </a>
+        </p>
         <h4 class="newsletter-title">{{ t('footer.newsletterTitle') }}</h4>
         <div class="newsletter">
           <input :placeholder="t('footer.newsletterPlaceholder')">

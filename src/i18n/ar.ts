@@ -345,7 +345,7 @@ export const ar: Dictionary = {
   'contact.heading': 'تواصل معنا',
   'contact.hours': 'فريق خدمة العملاء متاح يوميًا من ٩ صباحًا حتى ١٠ مساءً.',
   'contact.phoneLabel': 'واتساب والهاتف',
-  'contact.emailLabel': 'البريد الإلكتروني',
+  'contact.instagramLabel': 'إنستغرام',
   'contact.bakeryLabel': 'المخبز',
   'contact.form.name': 'الاسم',
   'contact.form.namePlaceholder': 'اسمك',
