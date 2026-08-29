@@ -706,3 +706,17 @@
   border-radius:10px;
   outline:0
 }
+
+/* Same block-element problem as the panel icons: a centred card cannot centre
+   its image with text-align alone. */
+.category-mini img{
+  margin-inline:auto
+}
+
+.admin-order-slot{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-weight:700;
+  color:var(--teal)
+}

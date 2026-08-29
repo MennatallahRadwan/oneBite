@@ -37,6 +37,11 @@ const credentials = z.object({
 
 const register = credentials.extend({name: z.string().min(2).max(120)});
 
+const passwordChange = z.object({
+  currentPassword: z.string().min(1).max(200),
+  newPassword: z.string().min(12).max(200)
+});
+
 const slugs = z.object({slugs: z.array(z.string().min(1).max(120)).max(200)});
 
 const address = z.object({
@@ -141,6 +146,32 @@ export function customerRouter() {
     if (!customer) return unauthenticated(res);
     res.locals.customer = customer;
     next();
+  });
+
+  router.post('/auth/password', authLimiter(), async (req, res) => {
+    const body = parse(passwordChange, req, res, 'Invalid password change');
+    if (!body) return;
+    const session = res.locals.customer as {id: string};
+    const user = await prisma.user.findUnique({where: {id: session.id}, select: {passwordHash: true}});
+    if (!user?.passwordHash || !verifyPassword(body.currentPassword, user.passwordHash)) {
+      return res
+        .status(401)
+        .json({error: {code: 'INVALID_CREDENTIALS', message: 'That password was not accepted'}});
+    }
+
+    await prisma.user.update({
+      where: {id: session.id},
+      data: {passwordHash: hashPassword(body.newPassword)}
+    });
+
+    // Every other session was authenticated with the old password, so they are
+    // dropped; this one is kept so the customer is not signed out mid-change.
+    const current = readCookie(req, cookieName);
+    await prisma.session.deleteMany({
+      where: {userId: session.id, ...(current ? {NOT: {tokenHash: hash(current)}} : {})}
+    });
+
+    res.status(204).end();
   });
 
   router.get('/me', async (_req, res) => {

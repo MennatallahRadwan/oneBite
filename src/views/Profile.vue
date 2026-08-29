@@ -15,6 +15,9 @@ const busy = ref(false);
 const error = ref('');
 
 const auth = ref({name: '', email: '', password: ''});
+const confirmPassword = ref('');
+const passwordForm = ref({current: '', next: '', confirm: ''});
+const passwordNotice = ref('');
 const address = ref({
   label: 'Home',
   governorate: '',
@@ -35,11 +38,36 @@ async function submitAuth() {
   busy.value = true;
   error.value = '';
   try {
+    if (mode.value === 'register' && auth.value.password !== confirmPassword.value) {
+      error.value = t('profile.passwordMismatch');
+      busy.value = false;
+      return;
+    }
     if (mode.value === 'register') await customer.register(auth.value, shop.wishlist);
     else await customer.login(auth.value, shop.wishlist);
     if (customer.account) shop.setWishlist(customer.account.wishlist);
   } catch (reason) {
     error.value = errorMessage(reason, 'error.order');
+  } finally {
+    busy.value = false;
+  }
+}
+
+async function changePassword() {
+  passwordNotice.value = '';
+  error.value = '';
+  if (passwordForm.value.next !== passwordForm.value.confirm) {
+    error.value = t('profile.passwordMismatch');
+    return;
+  }
+
+  busy.value = true;
+  try {
+    await customer.changePassword(passwordForm.value.current, passwordForm.value.next);
+    passwordForm.value = {current: '', next: '', confirm: ''};
+    passwordNotice.value = t('profile.passwordChanged');
+  } catch (reason) {
+    error.value = errorMessage(reason, 'error.generic');
   } finally {
     busy.value = false;
   }
@@ -121,6 +149,10 @@ async function addAddress() {
               >
               <small class="form-note">{{ t('profile.passwordHint') }}</small>
             </label>
+            <label v-if="mode === 'register'" class="span2">
+              {{ t('profile.confirmPassword') }}
+              <input v-model="confirmPassword" type="password" autocomplete="new-password" minlength="12" required>
+            </label>
             <button class="btn primary span2" :disabled="busy">
               {{ busy ? t('checkout.wait') : mode === 'login' ? t('profile.login') : t('profile.register') }}
             </button>
@@ -146,6 +178,27 @@ async function addAddress() {
         </div>
 
         <div class="account-grid">
+          <div class="account-panel">
+            <h2><ShieldCheck/> {{ t('profile.changePassword') }}</h2>
+            <p v-if="passwordNotice" class="form-note" role="status">{{ passwordNotice }}</p>
+            <form class="form-grid admin-form" @submit.prevent="changePassword">
+              <label class="span2">
+                {{ t('profile.currentPassword') }}
+                <input v-model="passwordForm.current" type="password" autocomplete="current-password" required>
+              </label>
+              <label class="span2">
+                {{ t('profile.newPassword') }}
+                <input v-model="passwordForm.next" type="password" autocomplete="new-password" minlength="12" required>
+                <small class="form-note">{{ t('profile.passwordHint') }}</small>
+              </label>
+              <label class="span2">
+                {{ t('profile.confirmPassword') }}
+                <input v-model="passwordForm.confirm" type="password" autocomplete="new-password" minlength="12" required>
+              </label>
+              <button class="btn primary span2" :disabled="busy">{{ t('profile.changePassword') }}</button>
+            </form>
+          </div>
+
           <div class="account-panel">
             <h2><Heart/> {{ t('profile.wishlist') }}</h2>
             <p class="form-note">{{ t('profile.wishlistCount', {count: shop.wishlist.length}) }}</p>

@@ -88,6 +88,8 @@ export type OwnerOrder = {
   giftRecipientPhone: string | null;
   giftMessage: string | null;
   giftAnonymous: boolean;
+  /** The delivery date the customer picked, from the capacity reservation. */
+  reservation: {date: string} | null;
 };
 
 export type OwnerOrderUpdate = {
@@ -396,6 +398,8 @@ export const api = {
     me: () => request<CustomerAccount>('/customer/me'),
     register: (name: string, email: string, password: string) =>
       post<{customer: Customer}>('/customer/auth/register', {name, email, password}),
+    changePassword: (currentPassword: string, newPassword: string) =>
+      post<void>('/customer/auth/password', {currentPassword, newPassword}),
     login: (email: string, password: string) =>
       post<{customer: Customer}>('/customer/auth/login', {email, password}),
     logout: () => request<void>('/customer/auth/logout', {method: 'POST'}),

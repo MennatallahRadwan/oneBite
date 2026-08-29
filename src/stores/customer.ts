@@ -46,6 +46,10 @@ export const useCustomerStore = defineStore('customer', {
       await this.syncWishlist([...new Set([...this.wishlist, ...localWishlist])]);
     },
 
+    async changePassword(currentPassword: string, newPassword: string) {
+      await api.customer.changePassword(currentPassword, newPassword);
+    },
+
     async logout() {
       await api.customer.logout();
       this.account = null;

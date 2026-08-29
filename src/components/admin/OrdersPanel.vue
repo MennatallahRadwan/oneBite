@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {onMounted, ref} from 'vue';
-import {Check, Gift, Package, ShieldCheck, Truck, Wallet, X} from 'lucide-vue-next';
+import {CalendarClock, Check, Gift, Package, ShieldCheck, Truck, Wallet, X} from 'lucide-vue-next';
 import {api, type CodStatus, type FulfilmentStatus, type OwnerOrder} from '../../api/client';
 import {messageFrom, money, readable} from './admin-ui';
 
@@ -92,6 +92,18 @@ function shortDate(value: string) {
     new Date(value)
   );
 }
+
+// The order row stores only the time window; the date the customer chose is
+// on the capacity reservation, and the bakery needs both to plan a delivery.
+function deliverySlot(order: OwnerOrder) {
+  if (!order.reservation) return order.deliveryWindow;
+  const date = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short'
+  }).format(new Date(order.reservation.date));
+  return `${date} · ${order.deliveryWindow}`;
+}
 </script>
 
 <template>
@@ -122,7 +134,7 @@ function shortDate(value: string) {
             <span>{{ order.customerName }}</span>
             <span>{{ order.customerPhone }}</span>
             <span>{{ order.areaName }}</span>
-            <span>{{ order.deliveryWindow }}</span>
+            <span class="admin-order-slot"><CalendarClock :size="14"/> {{ deliverySlot(order) }}</span>
           </div>
           <small v-if="order.isGift" class="gift-note">
             <Gift :size="14"/>

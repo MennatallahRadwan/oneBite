@@ -241,7 +241,10 @@ export function ownerRouter() {
         giftRecipientName: true,
         giftRecipientPhone: true,
         giftMessage: true,
-        giftAnonymous: true
+        giftAnonymous: true,
+        // The chosen delivery date is only on the reservation; the order itself
+        // stores the time window alone.
+        reservation: {select: {date: true}}
       }
     });
     res.json({items});
