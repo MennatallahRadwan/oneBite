@@ -153,6 +153,7 @@ export const en = {
   'profile.changePassword': 'Change password',
   'profile.currentPassword': 'Current password',
   'profile.newPassword': 'New password',
+  'profile.passwordChangedTitle': 'Password changed',
   'profile.passwordChanged': 'Your password has been changed. Other devices have been signed out.',
   'profile.orders': 'Orders',
   'profile.noOrders': 'No orders are linked to this account yet.',

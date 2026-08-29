@@ -152,6 +152,7 @@ export const ar: Dictionary = {
   'profile.changePassword': 'تغيير كلمة المرور',
   'profile.currentPassword': 'كلمة المرور الحالية',
   'profile.newPassword': 'كلمة المرور الجديدة',
+  'profile.passwordChangedTitle': 'تم تغيير كلمة المرور',
   'profile.passwordChanged': 'تم تغيير كلمة المرور. تم تسجيل الخروج من الأجهزة الأخرى.',
   'profile.orders': 'الطلبات',
   'profile.noOrders': 'لا توجد طلبات مرتبطة بهذا الحساب بعد.',

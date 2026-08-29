@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {onMounted, ref} from 'vue';
-import {Heart, Home, LogOut, Package, Plus, ShieldCheck, Trash2} from 'lucide-vue-next';
+import {Check, ChevronDown, Heart, Home, LogOut, Package, Plus, ShieldCheck, Trash2} from 'lucide-vue-next';
 import PageHero from '../components/PageHero.vue';
 import AppLink from '../components/AppLink.vue';
 import {t} from '../i18n';
@@ -17,7 +17,8 @@ const error = ref('');
 const auth = ref({name: '', email: '', password: ''});
 const confirmPassword = ref('');
 const passwordForm = ref({current: '', next: '', confirm: ''});
-const passwordNotice = ref('');
+const passwordOpen = ref(false);
+const passwordDone = ref(false);
 const address = ref({
   label: 'Home',
   governorate: '',
@@ -53,8 +54,13 @@ async function submitAuth() {
   }
 }
 
+function togglePasswordForm() {
+  passwordOpen.value = !passwordOpen.value;
+  passwordDone.value = false;
+  passwordForm.value = {current: '', next: '', confirm: ''};
+}
+
 async function changePassword() {
-  passwordNotice.value = '';
   error.value = '';
   if (passwordForm.value.next !== passwordForm.value.confirm) {
     error.value = t('profile.passwordMismatch');
@@ -65,7 +71,7 @@ async function changePassword() {
   try {
     await customer.changePassword(passwordForm.value.current, passwordForm.value.next);
     passwordForm.value = {current: '', next: '', confirm: ''};
-    passwordNotice.value = t('profile.passwordChanged');
+    passwordDone.value = true;
   } catch (reason) {
     error.value = errorMessage(reason, 'error.generic');
   } finally {
@@ -179,9 +185,21 @@ async function addAddress() {
 
         <div class="account-grid">
           <div class="account-panel">
-            <h2><ShieldCheck/> {{ t('profile.changePassword') }}</h2>
-            <p v-if="passwordNotice" class="form-note" role="status">{{ passwordNotice }}</p>
-            <form class="form-grid admin-form" @submit.prevent="changePassword">
+            <button class="panel-disclosure" type="button" :aria-expanded="passwordOpen" @click="togglePasswordForm">
+              <span><ShieldCheck :size="18"/> {{ t('profile.changePassword') }}</span>
+              <ChevronDown :size="18" :class="{open: passwordOpen}"/>
+            </button>
+
+            <div v-if="passwordOpen && passwordDone" class="password-done">
+              <span class="success-icon"><Check :size="26"/></span>
+              <h3>{{ t('profile.passwordChangedTitle') }}</h3>
+              <p>{{ t('profile.passwordChanged') }}</p>
+              <button class="btn secondary" type="button" @click="passwordOpen = false">
+                {{ t('common.close') }}
+              </button>
+            </div>
+
+            <form v-else-if="passwordOpen" class="form-grid admin-form" @submit.prevent="changePassword">
               <label class="span2">
                 {{ t('profile.currentPassword') }}
                 <input v-model="passwordForm.current" type="password" autocomplete="current-password" required>

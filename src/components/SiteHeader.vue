@@ -20,6 +20,11 @@ const store = useShopStore();
 const route = useRoute();
 const router = useRouter();
 
+// The owner dashboard is a different application wearing the same shell.
+// Showing a customer nav there invites the owner to click into the storefront
+// account area, which is not where their session lives.
+const isAdmin = computed(() => ['/admin', '/ar/admin'].includes(route.path));
+
 const links = computed(() => [
   { to: "/shop", label: t("nav.shop") },
   { to: "/categories", label: t("nav.categories") },
@@ -84,7 +89,7 @@ watch(open, (isOpen) => {
         >
       </AppLink>
 
-      <button
+      <button v-if="!isAdmin"
         class="mobile-drawer-trigger"
         :aria-label="t('nav.menu')"
         :aria-expanded="open"
@@ -95,7 +100,7 @@ watch(open, (isOpen) => {
         <Menu v-else :size="22" />
       </button>
 
-      <nav class="navlinks">
+      <nav v-if="!isAdmin" class="navlinks">
         <AppLink
           v-for="link in links"
           :key="link.to"
@@ -116,19 +121,19 @@ watch(open, (isOpen) => {
           <span class="locale-text">{{ t("locale.switchTo") }}</span>
           <span class="nav-action-label">{{ t("locale.switchTo") }}</span>
         </button>
-        <AppLink to="/search" class="nav-action" :aria-label="t('nav.search')">
+        <AppLink v-if="!isAdmin" to="/search" class="nav-action" :aria-label="t('nav.search')">
           <Search :size="20" />
           <span class="nav-action-label">{{ t("nav.search") }}</span>
         </AppLink>
         <AppLink
-          to="/profile"
+          :to="isAdmin ? '/admin' : '/profile'"
           class="nav-action"
-          :aria-label="t('nav.account')"
+          :aria-label="isAdmin ? 'Bakery dashboard' : t('nav.account')"
         >
           <User :size="20" />
-          <span class="nav-action-label">{{ t("nav.account") }}</span>
+          <span class="nav-action-label">{{ isAdmin ? 'Dashboard' : t("nav.account") }}</span>
         </AppLink>
-        <AppLink
+        <AppLink v-if="!isAdmin"
           to="/orders"
           class="nav-action"
           :aria-label="t('nav.orders')"
@@ -136,7 +141,7 @@ watch(open, (isOpen) => {
           <Package :size="20" />
           <span class="nav-action-label">{{ t("nav.orders") }}</span>
         </AppLink>
-        <AppLink
+        <AppLink v-if="!isAdmin"
           to="/wishlist"
           class="nav-action badge-wrap"
           :aria-label="t('nav.wishlist')"
@@ -147,7 +152,7 @@ watch(open, (isOpen) => {
           }}</em>
           <span class="nav-action-label">{{ t("nav.wishlist") }}</span>
         </AppLink>
-        <AppLink
+        <AppLink v-if="!isAdmin"
           to="/cart"
           class="nav-action badge-wrap"
           :aria-label="t('nav.cart')"
@@ -158,7 +163,7 @@ watch(open, (isOpen) => {
           }}</em>
           <span class="nav-action-label">{{ t("nav.cart") }}</span>
         </AppLink>
-        <button
+        <button v-if="!isAdmin"
           class="nav-action menu"
           :aria-label="t('nav.menu')"
           :aria-expanded="open"
@@ -172,7 +177,7 @@ watch(open, (isOpen) => {
     </div>
   </header>
 
-  <div v-if="open" class="mobile-drawer-backdrop" @click.self="closeMenu">
+  <div  v-if="open" class="mobile-drawer-backdrop" @click.self="closeMenu">
     <aside id="mobile-drawer" class="mobile-drawer" role="dialog" :aria-label="t('nav.menu')">
       <div class="mobile-drawer-head">
         <span class="brand">
