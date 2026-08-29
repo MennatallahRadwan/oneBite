@@ -396,8 +396,8 @@ export const api = {
 
   customer: {
     me: () => request<CustomerAccount>('/customer/me'),
-    register: (name: string, email: string, password: string) =>
-      post<{customer: Customer}>('/customer/auth/register', {name, email, password}),
+    register: (name: string, email: string, password: string, phone: string) =>
+      post<{customer: Customer}>('/customer/auth/register', {name, email, password, phone}),
     changePassword: (currentPassword: string, newPassword: string) =>
       post<void>('/customer/auth/password', {currentPassword, newPassword}),
     login: (email: string, password: string) =>

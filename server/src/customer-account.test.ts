@@ -5,6 +5,7 @@ import {prisma} from './db.js';
 
 const email = 'customer-account-test@example.com';
 const password = 'customer-password-123';
+const phone = '+96590000001';
 
 afterAll(async () => {
   const user = await prisma.user.findUnique({where: {email}});
@@ -22,7 +23,7 @@ describe('customer accounts', () => {
     const app = createApp();
     const registered = await request(app)
       .post('/api/v1/customer/auth/register')
-      .send({name: 'Customer Test', email, password});
+      .send({name: 'Customer Test', email, password, phone});
 
     expect(registered.status).toBe(201);
     const cookie = registered.headers['set-cookie'];

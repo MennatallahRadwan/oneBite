@@ -14,7 +14,7 @@ const mode = ref<'login' | 'register'>('login');
 const busy = ref(false);
 const error = ref('');
 
-const auth = ref({name: '', email: '', password: ''});
+const auth = ref({name: '', email: '', password: '', phone: ''});
 const confirmPassword = ref('');
 const passwordForm = ref({current: '', next: '', confirm: ''});
 const passwordOpen = ref(false);
@@ -140,6 +140,16 @@ async function addAddress() {
           <form class="form-grid admin-form" @submit.prevent="submitAuth">
             <label v-if="mode === 'register'" class="span2">
               {{ t('profile.name') }}<input v-model="auth.name" autocomplete="name" required>
+            </label>
+            <label v-if="mode === 'register'" class="span2">
+              {{ t('checkout.field.phone') }}
+              <input
+                v-model="auth.phone"
+                dir="ltr"
+                autocomplete="tel"
+                :placeholder="t('checkout.field.phonePlaceholder')"
+                required
+              >
             </label>
             <label class="span2">
               {{ t('checkout.field.email') }}<input v-model="auth.email" type="email" autocomplete="email" required>

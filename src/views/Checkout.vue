@@ -302,7 +302,7 @@ async function next() {
                   <input v-model="form.phone" dir="ltr" :placeholder="t('checkout.field.phonePlaceholder')">
                 </label>
                 <label class="span2">
-                  {{ t('checkout.field.email') }} <small>{{ t('checkout.field.emailHint') }}</small>
+                  {{ t('checkout.field.email') }} <small v-if="!customer.signedIn">{{ t('checkout.field.emailHint') }}</small>
                   <input v-model="form.email" type="email" autocomplete="email">
                 </label>
                 <label>

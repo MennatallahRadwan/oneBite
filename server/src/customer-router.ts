@@ -35,7 +35,10 @@ const credentials = z.object({
   password: z.string().min(12).max(200)
 });
 
-const register = credentials.extend({name: z.string().min(2).max(120)});
+const register = credentials.extend({
+  name: z.string().min(2).max(120),
+  phone: z.string().min(6).max(30)
+});
 
 const passwordChange = z.object({
   currentPassword: z.string().min(1).max(200),
@@ -109,14 +112,23 @@ export function customerRouter() {
       return res.status(409).json({error: {code: 'CONFLICT', message: 'A customer account already exists for that email.'}});
     }
 
+    // user.phone is unique, so a number already on another account has to be
+    // reported rather than left to fail on the constraint.
+    const phoneHolder = await prisma.user.findUnique({where: {phone: body.phone}, select: {id: true}});
+    if (phoneHolder && phoneHolder.id !== existing?.id) {
+      return res.status(409).json({
+        error: {code: 'CONFLICT', message: 'That phone number is already used by another account.'}
+      });
+    }
+
     const user = existing
       ? await prisma.user.update({
           where: {id: existing.id},
-          data: {name: body.name, passwordHash: hashPassword(body.password), role: 'CUSTOMER'},
+          data: {name: body.name, phone: body.phone, passwordHash: hashPassword(body.password), role: 'CUSTOMER'},
           select: {id: true, name: true, email: true}
         })
       : await prisma.user.create({
-          data: {name: body.name, email, passwordHash: hashPassword(body.password), role: 'CUSTOMER'},
+          data: {name: body.name, phone: body.phone, email, passwordHash: hashPassword(body.password), role: 'CUSTOMER'},
           select: {id: true, name: true, email: true}
         });
     await createSession(user.id, res);

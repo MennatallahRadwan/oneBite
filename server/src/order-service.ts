@@ -103,17 +103,28 @@ async function reserveOnce(input: OrderRequest) {
     const existingUser = customerEmail
       ? await tx.user.findUnique({where: {email: customerEmail}, select: {id: true, role: true}})
       : null;
+
+    // user.phone is unique. Two accounts can legitimately share a number (a
+    // household, or one person with two emails), so the phone is only claimed
+    // when it is free or already ours; otherwise the order proceeds without
+    // touching it rather than failing on the constraint.
+    const phoneHolder = await tx.user.findUnique({
+      where: {phone: input.customer.phone},
+      select: {id: true}
+    });
+    const claimablePhone = (ownerId?: string) =>
+      !phoneHolder || phoneHolder.id === ownerId ? {phone: input.customer.phone} : {};
     const user = customerEmail
       ? existingUser?.role === 'CUSTOMER'
         ? await tx.user.update({
             where: {id: existingUser.id},
-            data: {name: input.customer.name, phone: input.customer.phone},
+            data: {name: input.customer.name, ...claimablePhone(existingUser.id)},
             select: {id: true}
           })
         : existingUser
           ? null
           : await tx.user.create({
-              data: {email: customerEmail, name: input.customer.name, phone: input.customer.phone},
+              data: {email: customerEmail, name: input.customer.name, ...claimablePhone()},
               select: {id: true}
             })
       : null;

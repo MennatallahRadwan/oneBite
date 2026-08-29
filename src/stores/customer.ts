@@ -2,7 +2,7 @@ import {defineStore} from 'pinia';
 import {api, type CustomerAccount, type CustomerAddressInput} from '../api/client';
 
 type Credentials = {email: string; password: string};
-type Registration = Credentials & {name: string};
+type Registration = Credentials & {name: string; phone: string};
 
 export const useCustomerStore = defineStore('customer', {
   state: () => ({
@@ -35,7 +35,7 @@ export const useCustomerStore = defineStore('customer', {
     },
 
     async register(input: Registration, localWishlist: string[]) {
-      await api.customer.register(input.name, input.email, input.password);
+      await api.customer.register(input.name, input.email, input.password, input.phone);
       this.account = await api.customer.me();
       await this.syncWishlist(localWishlist);
     },
