@@ -720,3 +720,74 @@
   font-weight:700;
   color:var(--teal)
 }
+
+/* ---- Admin order row + reject dialog ---- */
+
+/* .admin-flag is width:max-content, which ignores its grid track, so a long
+   label like PENDING CONFIRMATION overflowed onto the next column. The order
+   status column also holds the longest content of the three. */
+.admin-order-statuses{
+  grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr)
+}
+
+.admin-order-statuses .admin-flag{
+  max-width:100%;
+  white-space:normal
+}
+
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:60;
+  background:rgba(15,51,48,.45);
+  backdrop-filter:blur(2px);
+  display:grid;
+  place-items:center;
+  padding:24px
+}
+
+.modal-card{
+  width:min(460px,100%);
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:26px;
+  box-shadow:var(--shadow);
+  display:grid;
+  gap:14px
+}
+
+.modal-card h3{
+  margin:0;
+  font-family:'Playfair Display';
+  font-size:24px
+}
+
+.modal-card label{
+  display:grid;
+  gap:7px;
+  font-size:13px;
+  font-weight:700;
+  color:#444
+}
+
+.modal-card textarea{
+  width:100%;
+  border:1px solid var(--border);
+  background:var(--alt);
+  padding:12px;
+  border-radius:10px;
+  outline:0;
+  resize:vertical
+}
+
+.modal-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  flex-wrap:wrap
+}
+
+.modal-actions .btn:disabled{
+  opacity:.45
+}

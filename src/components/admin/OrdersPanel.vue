@@ -24,15 +24,31 @@ async function load() {
 
 onMounted(load);
 
-async function updateOrder(order: OwnerOrder, status: 'CONFIRMED' | 'REJECTED' | 'CANCELLED') {
-  const rejectionReason =
-    status === 'REJECTED' ? window.prompt('Why is this order being rejected?')?.trim() : undefined;
-  if (status === 'REJECTED' && !rejectionReason) return;
+const rejecting = ref<OwnerOrder | null>(null);
+const rejectionReason = ref('');
 
+function askReject(order: OwnerOrder) {
+  rejecting.value = order;
+  rejectionReason.value = '';
+}
+
+async function confirmReject() {
+  const order = rejecting.value;
+  if (!order || !rejectionReason.value.trim()) return;
+  const reason = rejectionReason.value.trim();
+  rejecting.value = null;
+  await updateOrder(order, 'REJECTED', reason);
+}
+
+async function updateOrder(
+  order: OwnerOrder,
+  status: 'CONFIRMED' | 'REJECTED' | 'CANCELLED',
+  rejectionNote?: string
+) {
   busy.value = true;
   error.value = '';
   try {
-    await api.owner.updateOrder(order.publicNumber, {status, rejectionReason});
+    await api.owner.updateOrder(order.publicNumber, {status, rejectionReason: rejectionNote});
     await load();
   } catch (reason) {
     error.value = messageFrom(reason, 'Unable to update the order.');
@@ -189,7 +205,7 @@ function deliverySlot(order: OwnerOrder) {
           <button class="btn primary" :disabled="busy" @click="updateOrder(order, 'CONFIRMED')">
             <Check :size="15"/> Confirm
           </button>
-          <button class="btn secondary" :disabled="busy" @click="updateOrder(order, 'REJECTED')">
+          <button class="btn secondary" :disabled="busy" @click="askReject(order)">
             <X :size="15"/> Reject
           </button>
           <button class="btn secondary" :disabled="busy" @click="updateOrder(order, 'CANCELLED')">
@@ -197,6 +213,36 @@ function deliverySlot(order: OwnerOrder) {
           </button>
         </span>
       </article>
+    </div>
+  </div>
+
+  <div v-if="rejecting" class="modal-backdrop" @click.self="rejecting = null">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="reject-title">
+      <h3 id="reject-title">Reject {{ rejecting.publicNumber }}?</h3>
+      <p class="form-note">
+        The customer sees this reason on their tracking page, so write what you
+        would tell them on the phone.
+      </p>
+      <label>
+        Reason
+        <textarea
+          v-model="rejectionReason"
+          rows="3"
+          placeholder="e.g. Fully booked for that date"
+          autofocus
+        ></textarea>
+      </label>
+      <div class="modal-actions">
+        <button class="btn secondary" type="button" @click="rejecting = null">Keep order</button>
+        <button
+          class="btn primary"
+          type="button"
+          :disabled="busy || !rejectionReason.trim()"
+          @click="confirmReject"
+        >
+          <X :size="15"/> Reject order
+        </button>
+      </div>
     </div>
   </div>
 </template>

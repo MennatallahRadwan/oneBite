@@ -144,10 +144,10 @@ async function addAddress() {
                 v-model="auth.password"
                 type="password"
                 :autocomplete="mode === 'register' ? 'new-password' : 'current-password'"
-                minlength="12"
+                :minlength="mode === 'register' ? 12 : undefined"
                 required
               >
-              <small class="form-note">{{ t('profile.passwordHint') }}</small>
+              <small v-if="mode === 'register'" class="form-note">{{ t('profile.passwordHint') }}</small>
             </label>
             <label v-if="mode === 'register'" class="span2">
               {{ t('profile.confirmPassword') }}
